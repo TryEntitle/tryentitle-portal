@@ -1,7 +1,7 @@
 // On Next.js 16, rename this file to proxy.ts and rename the export to `proxy`.
 // The app runs under basePath '/demo' (see next.config.example.mjs), so paths seen
 // here have NO /demo prefix, and redirects must go through nextUrl.clone() to keep it.
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
-        setAll: (list) => {
+        setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
           list.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           list.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
