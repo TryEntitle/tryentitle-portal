@@ -1,14 +1,96 @@
 'use client'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
-import { MailIcon, BellIcon } from '@/components/icons'
+import {
+  MailIcon,
+  BellIcon,
+  DashboardIcon,
+  UsersIcon,
+  MegaphoneIcon,
+  HelpIcon,
+  OrdersIcon,
+  ChevronDownIcon,
+} from '@/components/icons'
+import type { IconKey, NavEntry } from '@/lib/nav'
+import { colors } from '@/lib/theme'
 
-const BRAND_DARK = '#292928'
-const BRAND_ACCENT = '#e16e38'
+const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
+  dashboard: DashboardIcon,
+  users: UsersIcon,
+  megaphone: MegaphoneIcon,
+  help: HelpIcon,
+  orders: OrdersIcon,
+}
 
-export type NavItem = { label: string; href: string; icon?: React.ComponentType<{ size?: number }> }
+function NavLinkRow({ label, href, icon, active }: { label: string; href: string; icon?: IconKey; active: boolean }) {
+  const Icon = icon ? ICONS[icon] : null
+  return (
+    <Link
+      href={href}
+      style={{
+        padding: '10px 14px',
+        borderRadius: 8,
+        fontSize: 14,
+        textDecoration: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        color: active ? '#fff' : colors.default[400],
+        background: active ? colors.secondary[800] : 'transparent',
+        borderLeft: active ? `2px solid ${colors.secondary[500]}` : '2px solid transparent',
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      {Icon && <Icon size={16} />}
+      {label}
+    </Link>
+  )
+}
+
+function NavGroupRow({ entry, pathname }: { entry: Extract<NavEntry, { children: unknown[] }>; pathname: string }) {
+  const hasActiveChild = entry.children.some((c) => c.href === pathname)
+  const [open, setOpen] = useState(hasActiveChild)
+  const Icon = ICONS[entry.icon]
+
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: '100%',
+          padding: '10px 14px',
+          borderRadius: 8,
+          fontSize: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          color: colors.default[400],
+          background: 'transparent',
+          border: 'none',
+          borderLeft: '2px solid transparent',
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <Icon size={16} />
+        <span style={{ flex: 1 }}>{entry.label}</span>
+        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 120ms' }}>
+          <ChevronDownIcon size={13} />
+        </span>
+      </button>
+      {open && (
+        <div style={{ display: 'grid', gap: 2, paddingLeft: 22, marginTop: 2 }}>
+          {entry.children.map((child) => (
+            <NavLinkRow key={child.href} {...child} active={pathname === child.href} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function AppShell({
   title,
@@ -20,18 +102,19 @@ export default function AppShell({
   title: string
   subtitle?: string
   userEmail?: string
-  nav: NavItem[]
+  nav: NavEntry[]
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [openPanel, setOpenPanel] = useState<'mail' | 'bell' | null>(null)
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#f6f5f3' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: colors.layout.background }}>
       <aside
         style={{
           width: 240,
           flexShrink: 0,
-          background: BRAND_DARK,
+          background: colors.content.primary,
           padding: 24,
           display: 'flex',
           flexDirection: 'column',
@@ -40,36 +123,45 @@ export default function AppShell({
       >
         <Image src="/demo/logo-wordmark.png" alt="TryEntitle" width={180} height={63} unoptimized />
         <nav style={{ display: 'grid', gap: 4 }}>
-          {nav.map((item) => {
-            const active = pathname === item.href
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: 8,
-                  fontSize: 14,
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  color: active ? '#fff' : '#9a9a97',
-                  background: active ? 'rgba(225,110,56,0.16)' : 'transparent',
-                  borderLeft: active ? `2px solid ${BRAND_ACCENT}` : '2px solid transparent',
-                  fontWeight: active ? 600 : 400,
-                }}
-              >
-                {Icon && <Icon size={16} />}
-                {item.label}
-              </Link>
+          {nav.map((entry) =>
+            'children' in entry ? (
+              <NavGroupRow key={entry.label} entry={entry} pathname={pathname} />
+            ) : (
+              <NavLinkRow key={entry.href} {...entry} active={pathname === entry.href} />
             )
-          })}
+          )}
         </nav>
-        <div style={{ marginTop: 'auto', display: 'grid', gap: 10, borderTop: '1px solid #3d3d3b', paddingTop: 16 }}>
+        <div
+          style={{
+            marginTop: 'auto',
+            background: colors.default[700],
+            borderRadius: 14,
+            padding: 16,
+            display: 'grid',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 13, color: '#e8e8e6', fontWeight: 600 }}>Need help?</div>
+          <div style={{ fontSize: 12, color: colors.default[400] }}>You can contact us.</div>
+          <a
+            href="mailto:hello@tryentitle.tech"
+            style={{
+              textAlign: 'center',
+              padding: '9px 0',
+              borderRadius: 999,
+              background: colors.secondary[500],
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Get support
+          </a>
+        </div>
+        <div style={{ display: 'grid', gap: 10, borderTop: `1px solid ${colors.default[700]}`, paddingTop: 16 }}>
           {userEmail && (
-            <span style={{ fontSize: 12, color: '#9a9a97', wordBreak: 'break-all' }}>{userEmail}</span>
+            <span style={{ fontSize: 12, color: colors.default[400], wordBreak: 'break-all' }}>{userEmail}</span>
           )}
           <LogoutButton />
         </div>
@@ -85,17 +177,22 @@ export default function AppShell({
           }}
         >
           <div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: BRAND_DARK }}>{title}</h1>
-            {subtitle && <p style={{ margin: '6px 0 0', color: '#8a8a87', fontSize: 14 }}>{subtitle}</p>}
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: colors.content.primary }}>{title}</h1>
+            {subtitle && <p style={{ margin: '6px 0 0', color: colors.content.muted, fontSize: 14 }}>{subtitle}</p>}
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
             <button
               title="Messages"
-              style={{ ...iconButtonStyle }}
+              onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
+              style={iconButtonStyle}
             >
               <MailIcon size={18} />
             </button>
-            <button title="Notifications" style={{ ...iconButtonStyle, position: 'relative' }}>
+            <button
+              title="Notifications"
+              onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
+              style={{ ...iconButtonStyle, position: 'relative' }}
+            >
               <BellIcon size={18} />
               <span
                 style={{
@@ -105,11 +202,35 @@ export default function AppShell({
                   width: 7,
                   height: 7,
                   borderRadius: '50%',
-                  background: BRAND_ACCENT,
+                  background: colors.secondary[500],
                   border: '1.5px solid #fff',
                 }}
               />
             </button>
+
+            {openPanel && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 48,
+                  right: openPanel === 'mail' ? 50 : 0,
+                  width: 240,
+                  background: colors.layout.surface,
+                  border: `1px solid ${colors.layout.divider}`,
+                  borderRadius: 12,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                  padding: 16,
+                  zIndex: 10,
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                  {openPanel === 'mail' ? 'Messages' : 'Notifications'}
+                </div>
+                <div style={{ fontSize: 13, color: colors.content.muted }}>
+                  {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {children}
@@ -122,9 +243,9 @@ const iconButtonStyle: React.CSSProperties = {
   width: 40,
   height: 40,
   borderRadius: 10,
-  border: '1px solid #ececea',
-  background: '#fff',
-  color: '#6a6a67',
+  border: `1px solid ${colors.layout.divider}`,
+  background: colors.layout.surface,
+  color: colors.default[500],
   display: 'grid',
   placeItems: 'center',
   cursor: 'pointer',

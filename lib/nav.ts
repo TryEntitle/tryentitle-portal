@@ -1,14 +1,24 @@
-import { DashboardIcon, UsersIcon, MegaphoneIcon, HelpIcon, OrdersIcon } from '@/components/icons'
+export type IconKey = 'dashboard' | 'users' | 'megaphone' | 'help' | 'orders'
 
-export const ADMIN_NAV = [
-  { label: 'Dashboard', href: '/admin', icon: DashboardIcon },
-  { label: 'Customers', href: '/admin/customers', icon: UsersIcon },
-  { label: 'Promote', href: '/admin/promote', icon: MegaphoneIcon },
-  { label: 'Help', href: '/admin/help', icon: HelpIcon },
+export type NavLink = { label: string; href: string; icon: IconKey }
+export type NavGroup = { label: string; icon: IconKey; children: NavLink[] }
+export type NavEntry = NavLink | NavGroup
+
+export const ADMIN_NAV: NavEntry[] = [
+  { label: 'Dashboard', href: '/admin', icon: 'dashboard' },
+  {
+    label: 'Manage',
+    icon: 'users',
+    children: [
+      { label: 'Customers', href: '/admin/customers', icon: 'users' },
+      { label: 'Promote', href: '/admin/promote', icon: 'megaphone' },
+    ],
+  },
+  { label: 'Help', href: '/admin/help', icon: 'help' },
 ]
 
-export const CUSTOMER_NAV = [
-  { label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
-  { label: 'Orders', href: '/dashboard/orders', icon: OrdersIcon },
-  { label: 'Help', href: '/dashboard/help', icon: HelpIcon },
+export const CUSTOMER_NAV: NavEntry[] = [
+  { label: 'Dashboard', href: '/dashboard', icon: 'dashboard' },
+  { label: 'Orders', href: '/dashboard/orders', icon: 'orders' },
+  { label: 'Help', href: '/dashboard/help', icon: 'help' },
 ]

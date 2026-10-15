@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
+import Card from '@/components/Card'
 import { ADMIN_NAV } from '@/lib/nav'
+import { colors } from '@/lib/theme'
 
 const FAQS = [
   {
@@ -27,23 +29,14 @@ export default async function AdminHelp() {
     <AppShell title="Help" subtitle="Answers and support." userEmail={user?.email} nav={ADMIN_NAV}>
       <div style={{ display: 'grid', gap: 12, maxWidth: 640 }}>
         {FAQS.map((f) => (
-          <div
-            key={f.q}
-            style={{
-              border: '1px solid #ececea',
-              background: '#fff',
-              borderRadius: 14,
-              padding: '18px 20px',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-            }}
-          >
+          <Card key={f.q} style={{ padding: '18px 20px', boxShadow: '0 1px 2px rgba(0,0,0,0.03)' }}>
             <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{f.q}</div>
-            <div style={{ fontSize: 14, color: '#8a8a87', lineHeight: 1.6 }}>{f.a}</div>
-          </div>
+            <div style={{ fontSize: 14, color: colors.content.muted, lineHeight: 1.6 }}>{f.a}</div>
+          </Card>
         ))}
-        <div style={{ fontSize: 14, color: '#8a8a87', marginTop: 8 }}>
+        <div style={{ fontSize: 14, color: colors.content.muted, marginTop: 8 }}>
           Still stuck?{' '}
-          <a href="mailto:hello@tryentitle.tech" style={{ color: '#e16e38' }}>
+          <a href="mailto:hello@tryentitle.tech" style={{ color: colors.secondary[500] }}>
             hello@tryentitle.tech
           </a>
         </div>

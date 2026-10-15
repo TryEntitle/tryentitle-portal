@@ -1,3 +1,5 @@
+import { colors } from '@/lib/theme'
+
 // Isometric workflow diagram for the login panel: a staircase of 3D steps
 // connected by a path, echoing the logo's own stepped geometry.
 type Box = { x: number; y: number; accent?: boolean }
@@ -21,9 +23,9 @@ function IsoBox({ x, y, accent }: Box) {
     `${x + W},${y + H}`,
   ].join(' ')
 
-  const front_c = accent ? '#e16e38' : '#3a3a37'
-  const top_c = accent ? '#f0905f' : '#55564f'
-  const side_c = accent ? '#b9541f' : '#242422'
+  const front_c = accent ? colors.secondary[500] : colors.default[700]
+  const top_c = accent ? colors.secondary[300] : '#55564f'
+  const side_c = accent ? colors.secondary[600] : colors.default[900]
 
   return (
     <g>

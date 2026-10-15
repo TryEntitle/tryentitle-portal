@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import AppShell from '@/components/AppShell'
+import Card from '@/components/Card'
 import { ADMIN_NAV } from '@/lib/nav'
+import { colors } from '@/lib/theme'
 
 export default async function AdminPromote() {
   const supabase = await createClient()
@@ -15,18 +17,9 @@ export default async function AdminPromote() {
       userEmail={user?.email}
       nav={ADMIN_NAV}
     >
-      <div
-        style={{
-          border: '1px solid #ececea',
-          background: '#fff',
-          borderRadius: 16,
-          padding: 28,
-          maxWidth: 520,
-          boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)',
-        }}
-      >
+      <Card style={{ maxWidth: 520, padding: 28 }}>
         <h2 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 600 }}>Invite a customer</h2>
-        <p style={{ margin: '0 0 20px', fontSize: 14, color: '#8a8a87', lineHeight: 1.6 }}>
+        <p style={{ margin: '0 0 20px', fontSize: 14, color: colors.content.muted, lineHeight: 1.6 }}>
           Public sign-up is turned off, so new customers are added from Supabase:
           <strong> Authentication → Users → Invite user</strong>. Once invited, they'll land on their
           own dashboard — they never see other customers' data.
@@ -37,8 +30,8 @@ export default async function AdminPromote() {
             display: 'inline-block',
             padding: '12px 20px',
             borderRadius: 999,
-            background: '#292928',
-            color: '#fff',
+            background: colors.content.primary,
+            color: colors.layout.surface,
             fontSize: 14,
             fontWeight: 500,
             textDecoration: 'none',
@@ -46,7 +39,7 @@ export default async function AdminPromote() {
         >
           Share an invite
         </a>
-      </div>
+      </Card>
     </AppShell>
   )
 }

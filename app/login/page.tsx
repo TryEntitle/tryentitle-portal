@@ -4,9 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import WorkflowPattern from '@/components/WorkflowPattern'
-
-const BRAND_DARK = '#292928'
-const BRAND_ACCENT = '#e16e38'
+import { colors } from '@/lib/theme'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -31,7 +29,7 @@ export default function Login() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f6f5f3', padding: 24, boxSizing: 'border-box' }}>
+    <div style={{ minHeight: '100vh', background: colors.layout.background, padding: 24, boxSizing: 'border-box' }}>
       <div
         style={{
           maxWidth: 1000,
@@ -46,7 +44,7 @@ export default function Login() {
       >
         <div
           style={{
-            background: BRAND_DARK,
+            background: colors.content.primary,
             padding: 40,
             display: 'flex',
             flexDirection: 'column',
@@ -57,10 +55,10 @@ export default function Login() {
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '24px 0' }}>
             <WorkflowPattern />
           </div>
-          <span style={{ color: '#6f6f6c', fontSize: 12 }}>&copy; {new Date().getFullYear()} TryEntitle</span>
+          <span style={{ color: colors.default[500], fontSize: 12 }}>&copy; {new Date().getFullYear()} TryEntitle</span>
         </div>
 
-        <div style={{ background: '#fff', display: 'grid', placeItems: 'center', padding: 32 }}>
+        <div style={{ background: colors.layout.surface, display: 'grid', placeItems: 'center', padding: 32 }}>
           <form onSubmit={onSubmit} style={{ maxWidth: 320, width: '100%', display: 'grid', gap: 16 }}>
             <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 600 }}>Sign in to your account</h1>
             <input
@@ -79,13 +77,13 @@ export default function Login() {
               required
               style={inputStyle}
             />
-            {error && <p style={{ color: '#d33', fontSize: 14, margin: 0 }}>{error}</p>}
+            {error && <p style={{ color: colors.danger[600], fontSize: 14, margin: 0 }}>{error}</p>}
             <button type="submit" disabled={loading} style={buttonStyle}>
               {loading ? 'Signing in...' : 'Sign in'}
             </button>
-            <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 13, color: '#999' }}>
+            <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 13, color: colors.content.muted }}>
               Need access?{' '}
-              <a href="mailto:hello@tryentitle.tech" style={{ color: BRAND_ACCENT, textDecoration: 'none' }}>
+              <a href="mailto:hello@tryentitle.tech" style={{ color: colors.secondary[500], textDecoration: 'none' }}>
                 Contact us
               </a>
             </p>
@@ -99,7 +97,7 @@ export default function Login() {
 const inputStyle: React.CSSProperties = {
   padding: '14px 16px',
   borderRadius: 999,
-  border: '1px solid #ddd',
+  border: `1px solid ${colors.default[200]}`,
   fontSize: 15,
   outline: 'none',
 }
@@ -108,8 +106,8 @@ const buttonStyle: React.CSSProperties = {
   padding: '14px 16px',
   borderRadius: 999,
   border: 'none',
-  background: BRAND_DARK,
-  color: '#fff',
+  background: colors.content.primary,
+  color: colors.layout.surface,
   fontSize: 15,
   fontWeight: 500,
   cursor: 'pointer',

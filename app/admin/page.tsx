@@ -5,6 +5,37 @@ import Table, { Td } from '@/components/Table'
 import StatusBadge from '@/components/StatusBadge'
 import { UsersIcon, OrdersIcon, PulseIcon, CheckIcon } from '@/components/icons'
 import { ADMIN_NAV } from '@/lib/nav'
+import BarChart from '@/components/BarChart'
+import DonutChart from '@/components/DonutChart'
+import Card from '@/components/Card'
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function monthlyOrders(orders: { created_at: string | null }[]) {
+  const now = new Date()
+  const buckets: { label: string; value: number }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    buckets.push({ label: MONTHS[d.getMonth()], value: 0 })
+  }
+  for (const o of orders) {
+    if (!o.created_at) continue
+    const d = new Date(o.created_at)
+    const monthsAgo =
+      (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth())
+    if (monthsAgo >= 0 && monthsAgo < 6) buckets[5 - monthsAgo].value += 1
+  }
+  return buckets
+}
+
+function statusBreakdown(orders: { status: string | null }[]) {
+  const counts: Record<string, number> = {}
+  for (const o of orders) {
+    const key = (o.status || 'new').toLowerCase()
+    counts[key] = (counts[key] || 0) + 1
+  }
+  return Object.entries(counts).map(([label, value]) => ({ label, value }))
+}
 
 const currency = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
@@ -84,6 +115,25 @@ export default async function Admin() {
           icon={<CheckIcon />}
           trend={trendFor(thisWeek.length, lastWeek.length)}
         />
+      </div>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.4fr 1fr',
+          gap: 16,
+          marginBottom: 28,
+          alignItems: 'stretch',
+        }}
+      >
+        <Card style={{ padding: 20 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>Order volume</h2>
+          <BarChart data={monthlyOrders(all)} />
+        </Card>
+        <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>Orders by status</h2>
+          <DonutChart data={statusBreakdown(all)} />
+        </Card>
       </div>
 
       <h2 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px' }}>Transaction history</h2>
