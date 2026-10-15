@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -33,6 +34,7 @@ export default function AppShell({
   children: React.ReactNode
 }) {
   const pathname = usePathname()
+  const [openPanel, setOpenPanel] = useState<'mail' | 'bell' | null>(null)
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: '#f6f5f3' }}>
@@ -76,7 +78,35 @@ export default function AppShell({
             )
           })}
         </nav>
-        <div style={{ marginTop: 'auto', display: 'grid', gap: 10, borderTop: '1px solid #3d3d3b', paddingTop: 16 }}>
+        <div
+          style={{
+            marginTop: 'auto',
+            background: '#343432',
+            borderRadius: 14,
+            padding: 16,
+            display: 'grid',
+            gap: 10,
+          }}
+        >
+          <div style={{ fontSize: 13, color: '#e8e8e6', fontWeight: 600 }}>Need help?</div>
+          <div style={{ fontSize: 12, color: '#9a9a97' }}>You can contact us.</div>
+          <a
+            href="mailto:hello@tryentitle.tech"
+            style={{
+              textAlign: 'center',
+              padding: '9px 0',
+              borderRadius: 999,
+              background: BRAND_ACCENT,
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+          >
+            Get support
+          </a>
+        </div>
+        <div style={{ display: 'grid', gap: 10, borderTop: '1px solid #3d3d3b', paddingTop: 16 }}>
           {userEmail && (
             <span style={{ fontSize: 12, color: '#9a9a97', wordBreak: 'break-all' }}>{userEmail}</span>
           )}
@@ -97,14 +127,19 @@ export default function AppShell({
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: BRAND_DARK }}>{title}</h1>
             {subtitle && <p style={{ margin: '6px 0 0', color: '#8a8a87', fontSize: 14 }}>{subtitle}</p>}
           </div>
-          <div style={{ display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
             <button
               title="Messages"
-              style={{ ...iconButtonStyle }}
+              onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
+              style={iconButtonStyle}
             >
               <MailIcon size={18} />
             </button>
-            <button title="Notifications" style={{ ...iconButtonStyle, position: 'relative' }}>
+            <button
+              title="Notifications"
+              onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
+              style={{ ...iconButtonStyle, position: 'relative' }}
+            >
               <BellIcon size={18} />
               <span
                 style={{
@@ -119,6 +154,30 @@ export default function AppShell({
                 }}
               />
             </button>
+
+            {openPanel && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 48,
+                  right: openPanel === 'mail' ? 50 : 0,
+                  width: 240,
+                  background: '#fff',
+                  border: '1px solid #ececea',
+                  borderRadius: 12,
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                  padding: 16,
+                  zIndex: 10,
+                }}
+              >
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                  {openPanel === 'mail' ? 'Messages' : 'Notifications'}
+                </div>
+                <div style={{ fontSize: 13, color: '#8a8a87' }}>
+                  {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {children}
