@@ -3,12 +3,21 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
-import { MailIcon, BellIcon } from '@/components/icons'
+import { MailIcon, BellIcon, DashboardIcon, UsersIcon, MegaphoneIcon, HelpIcon, OrdersIcon } from '@/components/icons'
+import type { IconKey } from '@/lib/nav'
 
 const BRAND_DARK = '#292928'
 const BRAND_ACCENT = '#e16e38'
 
-export type NavItem = { label: string; href: string; icon?: React.ComponentType<{ size?: number }> }
+const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
+  dashboard: DashboardIcon,
+  users: UsersIcon,
+  megaphone: MegaphoneIcon,
+  help: HelpIcon,
+  orders: OrdersIcon,
+}
+
+export type NavItem = { label: string; href: string; icon?: IconKey }
 
 export default function AppShell({
   title,
@@ -42,7 +51,7 @@ export default function AppShell({
         <nav style={{ display: 'grid', gap: 4 }}>
           {nav.map((item) => {
             const active = pathname === item.href
-            const Icon = item.icon
+            const Icon = item.icon ? ICONS[item.icon] : null
             return (
               <Link
                 key={item.href}
