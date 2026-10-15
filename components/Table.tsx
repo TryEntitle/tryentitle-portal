@@ -1,3 +1,5 @@
+import { colors } from '@/lib/theme'
+
 export default function Table({
   columns,
   children,
@@ -6,12 +8,22 @@ export default function Table({
   children: React.ReactNode
 }) {
   return (
-    <div style={{ border: '1px solid #eee', borderRadius: 12, background: '#fff', overflow: 'hidden' }}>
+    <div
+      style={{
+        border: `1px solid ${colors.layout.divider}`,
+        borderRadius: 12,
+        background: colors.layout.surface,
+        overflow: 'hidden',
+      }}
+    >
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
         <thead>
-          <tr style={{ background: '#fafafa', borderBottom: '1px solid #eee' }}>
+          <tr style={{ background: colors.default[50], borderBottom: `1px solid ${colors.layout.divider}` }}>
             {columns.map((c) => (
-              <th key={c} style={{ textAlign: 'left', padding: '10px 16px', color: '#888', fontWeight: 500 }}>
+              <th
+                key={c}
+                style={{ textAlign: 'left', padding: '10px 16px', color: colors.content.muted, fontWeight: 500 }}
+              >
                 {c}
               </th>
             ))}
@@ -24,5 +36,7 @@ export default function Table({
 }
 
 export function Td({ children, style }: { children?: React.ReactNode; style?: React.CSSProperties }) {
-  return <td style={{ padding: '12px 16px', borderTop: '1px solid #f3f3f3', ...style }}>{children}</td>
+  return (
+    <td style={{ padding: '12px 16px', borderTop: `1px solid ${colors.default[100]}`, ...style }}>{children}</td>
+  )
 }

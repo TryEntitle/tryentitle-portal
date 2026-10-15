@@ -7,6 +7,7 @@ import { UsersIcon, OrdersIcon, PulseIcon, CheckIcon } from '@/components/icons'
 import { ADMIN_NAV } from '@/lib/nav'
 import BarChart from '@/components/BarChart'
 import DonutChart from '@/components/DonutChart'
+import Card from '@/components/Card'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
@@ -125,33 +126,14 @@ export default async function Admin() {
           alignItems: 'stretch',
         }}
       >
-        <div
-          style={{
-            border: '1px solid #ececea',
-            background: '#fff',
-            borderRadius: 16,
-            padding: 20,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)',
-          }}
-        >
+        <Card style={{ padding: 20 }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>Order volume</h2>
           <BarChart data={monthlyOrders(all)} />
-        </div>
-        <div
-          style={{
-            border: '1px solid #ececea',
-            background: '#fff',
-            borderRadius: 16,
-            padding: 20,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.04)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
-        >
+        </Card>
+        <Card style={{ padding: 20, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <h2 style={{ fontSize: 15, fontWeight: 600, margin: '0 0 12px' }}>Orders by status</h2>
           <DonutChart data={statusBreakdown(all)} />
-        </div>
+        </Card>
       </div>
 
       <h2 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px' }}>Transaction history</h2>

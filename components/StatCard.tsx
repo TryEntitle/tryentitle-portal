@@ -1,6 +1,5 @@
 import { TrendUpIcon, TrendDownIcon } from '@/components/icons'
-
-const BRAND_ACCENT = '#e16e38'
+import { colors } from '@/lib/theme'
 
 export default function StatCard({
   label,
@@ -16,8 +15,8 @@ export default function StatCard({
   return (
     <div
       style={{
-        border: '1px solid #ececea',
-        background: '#fff',
+        border: `1px solid ${colors.layout.divider}`,
+        background: colors.layout.surface,
         borderRadius: 16,
         padding: '20px 22px',
         minWidth: 160,
@@ -30,8 +29,8 @@ export default function StatCard({
       }}
     >
       <div>
-        <div style={{ fontSize: 13, color: '#8a8a87' }}>{label}</div>
-        <div style={{ fontSize: 28, fontWeight: 600, marginTop: 6, color: '#292928' }}>{value}</div>
+        <div style={{ fontSize: 13, color: colors.content.muted }}>{label}</div>
+        <div style={{ fontSize: 28, fontWeight: 600, marginTop: 6, color: colors.content.primary }}>{value}</div>
         {trend && (
           <div
             style={{
@@ -41,7 +40,7 @@ export default function StatCard({
               marginTop: 8,
               fontSize: 12,
               fontWeight: 600,
-              color: trend.direction === 'up' ? '#10845a' : '#c23b3b',
+              color: trend.direction === 'up' ? colors.success[600] : colors.danger[600],
             }}
           >
             {trend.direction === 'up' ? <TrendUpIcon /> : <TrendDownIcon />}
@@ -55,8 +54,8 @@ export default function StatCard({
             width: 36,
             height: 36,
             borderRadius: 10,
-            background: 'rgba(225,110,56,0.12)',
-            color: BRAND_ACCENT,
+            background: colors.secondary[50],
+            color: colors.secondary[500],
             display: 'grid',
             placeItems: 'center',
             flexShrink: 0,

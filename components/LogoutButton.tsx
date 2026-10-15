@@ -1,6 +1,7 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { colors } from '@/lib/theme'
 
 export default function LogoutButton() {
   const router = useRouter()
@@ -15,9 +16,9 @@ export default function LogoutButton() {
       style={{
         padding: '8px 14px',
         borderRadius: 999,
-        border: '1px solid #4a4a47',
+        border: `1px solid ${colors.default[600]}`,
         background: 'transparent',
-        color: '#d4d4d1',
+        color: colors.default[200],
         fontSize: 13,
         cursor: 'pointer',
       }}

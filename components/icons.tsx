@@ -1,6 +1,6 @@
 type IconProps = { size?: number }
 
-const base = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+const base = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.6, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 
 export function UsersIcon({ size = 18 }: IconProps) {
   return (
@@ -118,6 +118,14 @@ export function TrendDownIcon({ size = 12 }: IconProps) {
     <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
       <path d="M4 8 10 14 14 10 20 16" />
       <path d="M14 16h6v-6" />
+    </svg>
+  )
+}
+
+export function ChevronDownIcon({ size = 14 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <path d="m6 9 6 6 6-6" />
     </svg>
   )
 }

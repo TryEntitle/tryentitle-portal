@@ -1,7 +1,6 @@
 'use client'
 import { useState } from 'react'
-
-const ACCENT = '#e16e38'
+import { colors } from '@/lib/theme'
 
 export default function BarChart({ data }: { data: { label: string; value: number }[] }) {
   const [hover, setHover] = useState<number | null>(null)
@@ -20,7 +19,7 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
             x2="360"
             y1={chartH - chartH * f}
             y2={chartH - chartH * f}
-            stroke="#ececea"
+            stroke={colors.layout.divider}
             strokeWidth="1"
           />
         ))}
@@ -42,9 +41,9 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
                 width={barW}
                 height={h}
                 rx="4"
-                fill={hover === i ? '#b9541f' : ACCENT}
+                fill={hover === i ? colors.secondary[600] : colors.secondary[500]}
               />
-              <text x={x + barW / 2} y={chartH + 18} textAnchor="middle" fontSize="11" fill="#8a8a87">
+              <text x={x + barW / 2} y={chartH + 18} textAnchor="middle" fontSize="11" fill={colors.content.muted}>
                 {d.label}
               </text>
             </g>
@@ -58,8 +57,8 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
             left: `${((gap + hover * (barW + gap) + barW / 2) / 360) * 100}%`,
             top: 0,
             transform: 'translate(-50%, -110%)',
-            background: '#292928',
-            color: '#fff',
+            background: colors.content.primary,
+            color: colors.content.inverse,
             fontSize: 12,
             padding: '6px 10px',
             borderRadius: 8,
