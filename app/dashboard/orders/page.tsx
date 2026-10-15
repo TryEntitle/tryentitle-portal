@@ -15,7 +15,7 @@ export default async function DashboardOrders() {
     .order('created_at', { ascending: false })
 
   return (
-    <AppShell title="Your orders" userEmail={user?.email} nav={CUSTOMER_NAV}>
+    <AppShell title="Orders" subtitle="Everything you've ordered." userEmail={user?.email} nav={CUSTOMER_NAV}>
       <Table columns={['Title', 'Status', 'Created']}>
         {(orders ?? []).map((o) => (
           <tr key={o.id}>

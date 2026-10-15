@@ -22,7 +22,12 @@ export default async function Dashboard() {
   const recent = (orders ?? []).slice(0, 5)
 
   return (
-    <AppShell title="Your dashboard" userEmail={user?.email} nav={CUSTOMER_NAV}>
+    <AppShell
+      title="Dashboard"
+      subtitle="Your orders and account activity."
+      userEmail={user?.email}
+      nav={CUSTOMER_NAV}
+    >
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <StatCard label="Total orders" value={orders?.length ?? 0} icon={<OrdersIcon />} />
         <StatCard label="Active" value={active.length} icon={<PulseIcon />} />

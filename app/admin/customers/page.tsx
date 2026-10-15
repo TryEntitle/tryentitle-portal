@@ -11,7 +11,12 @@ export default async function AdminCustomers() {
   const { data: customers } = await supabase.from('profiles').select('id, company, role')
 
   return (
-    <AppShell title="Customers" userEmail={user?.email} nav={ADMIN_NAV}>
+    <AppShell
+      title="Customers"
+      subtitle="Everyone with access to your portal."
+      userEmail={user?.email}
+      nav={ADMIN_NAV}
+    >
       <Table columns={['Company', 'Role', 'ID']}>
         {(customers ?? []).map((c) => (
           <tr key={c.id}>

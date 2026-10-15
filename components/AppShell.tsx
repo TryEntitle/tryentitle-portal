@@ -3,19 +3,22 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
+import { MailIcon, BellIcon } from '@/components/icons'
 
 const BRAND_DARK = '#292928'
 const BRAND_ACCENT = '#e16e38'
 
-export type NavItem = { label: string; href: string }
+export type NavItem = { label: string; href: string; icon?: React.ComponentType<{ size?: number }> }
 
 export default function AppShell({
   title,
+  subtitle,
   userEmail,
   nav,
   children,
 }: {
   title: string
+  subtitle?: string
   userEmail?: string
   nav: NavItem[]
   children: React.ReactNode
@@ -39,6 +42,7 @@ export default function AppShell({
         <nav style={{ display: 'grid', gap: 4 }}>
           {nav.map((item) => {
             const active = pathname === item.href
+            const Icon = item.icon
             return (
               <Link
                 key={item.href}
@@ -48,12 +52,16 @@ export default function AppShell({
                   borderRadius: 8,
                   fontSize: 14,
                   textDecoration: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
                   color: active ? '#fff' : '#9a9a97',
                   background: active ? 'rgba(225,110,56,0.16)' : 'transparent',
                   borderLeft: active ? `2px solid ${BRAND_ACCENT}` : '2px solid transparent',
                   fontWeight: active ? 600 : 400,
                 }}
               >
+                {Icon && <Icon size={16} />}
                 {item.label}
               </Link>
             )
@@ -67,10 +75,57 @@ export default function AppShell({
         </div>
       </aside>
 
-      <main style={{ flex: 1, padding: 32, maxWidth: 1100 }}>
-        <h1 style={{ margin: '0 0 24px', fontSize: 22, fontWeight: 600, color: BRAND_DARK }}>{title}</h1>
+      <main style={{ flex: 1, padding: 32, maxWidth: 1200 }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            marginBottom: 28,
+          }}
+        >
+          <div>
+            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: BRAND_DARK }}>{title}</h1>
+            {subtitle && <p style={{ margin: '6px 0 0', color: '#8a8a87', fontSize: 14 }}>{subtitle}</p>}
+          </div>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              title="Messages"
+              style={{ ...iconButtonStyle }}
+            >
+              <MailIcon size={18} />
+            </button>
+            <button title="Notifications" style={{ ...iconButtonStyle, position: 'relative' }}>
+              <BellIcon size={18} />
+              <span
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  width: 7,
+                  height: 7,
+                  borderRadius: '50%',
+                  background: BRAND_ACCENT,
+                  border: '1.5px solid #fff',
+                }}
+              />
+            </button>
+          </div>
+        </div>
         {children}
       </main>
     </div>
   )
+}
+
+const iconButtonStyle: React.CSSProperties = {
+  width: 40,
+  height: 40,
+  borderRadius: 10,
+  border: '1px solid #ececea',
+  background: '#fff',
+  color: '#6a6a67',
+  display: 'grid',
+  placeItems: 'center',
+  cursor: 'pointer',
 }

@@ -1,13 +1,17 @@
+import { TrendUpIcon, TrendDownIcon } from '@/components/icons'
+
 const BRAND_ACCENT = '#e16e38'
 
 export default function StatCard({
   label,
   value,
   icon,
+  trend,
 }: {
   label: string
   value: string | number
   icon?: React.ReactNode
+  trend?: { direction: 'up' | 'down'; label: string }
 }) {
   return (
     <div
@@ -28,6 +32,22 @@ export default function StatCard({
       <div>
         <div style={{ fontSize: 13, color: '#8a8a87' }}>{label}</div>
         <div style={{ fontSize: 28, fontWeight: 600, marginTop: 6, color: '#292928' }}>{value}</div>
+        {trend && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              marginTop: 8,
+              fontSize: 12,
+              fontWeight: 600,
+              color: trend.direction === 'up' ? '#10845a' : '#c23b3b',
+            }}
+          >
+            {trend.direction === 'up' ? <TrendUpIcon /> : <TrendDownIcon />}
+            {trend.label}
+          </div>
+        )}
       </div>
       {icon && (
         <div
