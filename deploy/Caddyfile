@@ -1,0 +1,11 @@
+tryentitle.tech, www.tryentitle.tech {
+    # Portal lives under /demo for now
+    handle /demo* {
+        reverse_proxy localhost:3000
+    }
+
+    # Everything else on the root domain goes to the demo login until a main site exists
+    handle {
+        redir https://tryentitle.tech/demo/login 302
+    }
+}
