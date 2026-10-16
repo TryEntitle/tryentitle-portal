@@ -37,26 +37,6 @@ export function CheckIcon({ size = 18 }: IconProps) {
   )
 }
 
-export function GridIcon({ size = 16 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
-    </svg>
-  )
-}
-
-export function ListIcon({ size = 16 }: IconProps) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
-      <path d="M8 6h13M8 12h13M8 18h13" />
-      <path d="M3 6h.01M3 12h.01M3 18h.01" />
-    </svg>
-  )
-}
-
 export function DashboardIcon({ size = 16 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" {...base}>
