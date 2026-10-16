@@ -13,7 +13,11 @@ export async function createClient() {
         setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
           try {
             list.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          } catch {}
+          } catch {
+            // Called from a Server Component render, where cookies can't be
+            // written — safe to ignore because middleware already refreshed
+            // the session cookie for this request.
+          }
         },
       },
     }

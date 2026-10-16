@@ -51,6 +51,9 @@ function NavLinkRow({ label, href, icon, active }: { label: string; href: string
 }
 
 function NavGroupRow({ entry, pathname }: { entry: Extract<NavEntry, { children: unknown[] }>; pathname: string }) {
+  // Auto-expand the group on first render if the current page is inside it,
+  // so navigating straight to e.g. /admin/customers doesn't hide the active
+  // link behind a collapsed "Manage" group.
   const hasActiveChild = entry.children.some((c) => c.href === pathname)
   const [open, setOpen] = useState(hasActiveChild)
   const Icon = ICONS[entry.icon]
