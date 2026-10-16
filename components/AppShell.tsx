@@ -122,7 +122,7 @@ export default function AppShell({
           gap: 32,
         }}
       >
-        <Image src="/demo/logo-wordmark.png" alt="TryEntitle" width={180} height={63} unoptimized />
+        <Image src="/logo-wordmark.png" alt="TryEntitle" width={180} height={63} unoptimized />
         <nav style={{ display: 'grid', gap: 4 }}>
           {nav.map((entry) =>
             'children' in entry ? (

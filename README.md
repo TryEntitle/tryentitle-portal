@@ -11,7 +11,7 @@ Two roles, two views:
 That separation is enforced twice: once by app routing, and once by the
 database itself (Postgres row-level security). See below for how.
 
-Live at **https://tryentitle.tech/demo/login**.
+Live at **https://tryentitle.tech/login**.
 
 ## Architecture
 
@@ -26,11 +26,6 @@ flowchart LR
     Browser -->|HTTPS| Cloudflare --> Caddy -->|localhost:3000| Next
     Next -->|REST / auth calls| Supabase
 ```
-
-One thing to know: the app runs under `basePath: '/demo'` (see
-`next.config.mjs`). So every route actually lives at `/demo/*`, not the
-domain root. This leaves room for a marketing site at the root later,
-without the two ever conflicting.
 
 ## Who can see what, step by step
 
@@ -120,7 +115,7 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-Visit `http://localhost:3000/demo/login`.
+Visit `http://localhost:3000/login`.
 
 ## Deployment
 
