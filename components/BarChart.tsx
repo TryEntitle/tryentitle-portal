@@ -4,9 +4,9 @@ import { colors } from '@/lib/theme'
 
 export default function BarChart({ data }: { data: { label: string; value: number }[] }) {
   const [hover, setHover] = useState<number | null>(null)
-  const max = Math.max(1, ...data.map((d) => d.value)) // avoid dividing by 0 when every bar is empty
+  const max = Math.max(1, ...data.map((d) => d.value)) // avoid divide-by-0
   const barW = 24
-  const gap = (360 - data.length * barW) / (data.length + 1) // evenly spaces bars across a fixed 360px-wide viewBox
+  const gap = (360 - data.length * barW) / (data.length + 1) // space bars evenly
   const chartH = 160
 
   return (

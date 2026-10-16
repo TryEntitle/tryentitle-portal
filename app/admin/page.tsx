@@ -11,8 +11,7 @@ import Card from '@/components/Card'
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-// Buckets orders into the trailing 6 calendar months (oldest first) for the
-// order-volume bar chart, including empty months so the chart doesn't skip.
+// Order counts for the last 6 months, oldest first.
 function monthlyOrders(orders: { created_at: string | null }[]) {
   const now = new Date()
   const buckets: { label: string; value: number }[] = []
@@ -30,8 +29,7 @@ function monthlyOrders(orders: { created_at: string | null }[]) {
   return buckets
 }
 
-// Counts orders per status for the donut chart. Unset status defaults to
-// 'new' to match the orders table's own default column value.
+// Order counts grouped by status.
 function statusBreakdown(orders: { status: string | null }[]) {
   const counts: Record<string, number> = {}
   for (const o of orders) {
@@ -44,9 +42,7 @@ function statusBreakdown(orders: { status: string | null }[]) {
 const currency = (n: number) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 
-// Week-over-week % change for a stat card's trend badge. Guards the
-// division-by-zero case (no orders last week) with a "New this week" label
-// instead of an Infinity/NaN percentage.
+// Week-over-week % change for a stat card's trend badge.
 function trendFor(current: number, previous: number): { direction: 'up' | 'down'; label: string } {
   if (previous === 0) {
     return current > 0 ? { direction: 'up', label: 'New this week' } : { direction: 'up', label: '0%' }

@@ -14,9 +14,7 @@ export async function createClient() {
           try {
             list.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
           } catch {
-            // Called from a Server Component render, where cookies can't be
-            // written — safe to ignore because middleware already refreshed
-            // the session cookie for this request.
+            // Server Components can't write cookies; safe to ignore here.
           }
         },
       },
