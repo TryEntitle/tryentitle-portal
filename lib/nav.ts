@@ -14,7 +14,7 @@ export type NavGroup = { label: string; icon: IconKey; children: NavLink[] }
 export type NavEntry = NavLink | NavGroup
 
 export const ADMIN_NAV: NavEntry[] = [
-  { label: 'Dashboard', href: '/admin', icon: 'dashboard' },
+  { label: 'Analytics', href: '/admin', icon: 'dashboard' },
   {
     label: 'Manage',
     icon: 'users',

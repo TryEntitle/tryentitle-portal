@@ -2,12 +2,24 @@
 import { useState } from 'react'
 import { colors } from '@/lib/theme'
 
-export default function BarChart({ data }: { data: { label: string; value: number }[] }) {
+export default function BarChart({
+  data,
+  format,
+}: {
+  data: { label: string; value: number }[]
+  // Tooltip renderer for a bucket's value; defaults to "<value> orders".
+  format?: (value: number) => React.ReactNode
+}) {
   const [hover, setHover] = useState<number | null>(null)
   const max = Math.max(1, ...data.map((d) => d.value)) // avoid divide-by-0
-  const barW = 24
-  const gap = (360 - data.length * barW) / (data.length + 1) // space bars evenly
+  // Bars shrink (down to 3px) once there are more than ~14 of them (e.g. a
+  // 30-day daily series) so they still fit the fixed 360-wide viewBox.
+  const n = Math.max(1, data.length)
+  const barW = Math.max(3, Math.min(24, 360 / (n + (n + 1) / 3)))
+  const gap = (360 - n * barW) / (n + 1)
   const chartH = 160
+  // Thin out x-axis text once bars are packed tightly, or labels overlap.
+  const labelEvery = n > 14 ? Math.ceil(n / 7) : 1
 
   return (
     <div style={{ position: 'relative' }}>
@@ -29,7 +41,7 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
           const y = chartH - h
           return (
             <g
-              key={d.label}
+              key={i}
               onPointerEnter={() => setHover(i)}
               onPointerLeave={() => setHover(null)}
               style={{ cursor: 'pointer' }}
@@ -40,12 +52,14 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
                 y={y}
                 width={barW}
                 height={h}
-                rx="4"
+                rx={Math.min(4, barW / 2)}
                 fill={hover === i ? colors.secondary[600] : colors.secondary[500]}
               />
-              <text x={x + barW / 2} y={chartH + 18} textAnchor="middle" fontSize="11" fill={colors.content.muted}>
-                {d.label}
-              </text>
+              {i % labelEvery === 0 && (
+                <text x={x + barW / 2} y={chartH + 18} textAnchor="middle" fontSize="11" fill={colors.content.muted}>
+                  {d.label}
+                </text>
+              )}
             </g>
           )
         })}
@@ -66,7 +80,8 @@ export default function BarChart({ data }: { data: { label: string; value: numbe
             pointerEvents: 'none',
           }}
         >
-          <strong>{data[hover].value}</strong> orders · {data[hover].label}
+          <strong>{format ? format(data[hover].value) : data[hover].value}</strong>
+          {!format && ' orders'} · {data[hover].label}
         </div>
       )}
     </div>
