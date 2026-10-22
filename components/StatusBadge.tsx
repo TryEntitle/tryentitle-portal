@@ -5,6 +5,8 @@ const BG: Record<string, string> = {
   'in progress': colors.secondary[50],
   completed: colors.success[50],
   cancelled: colors.danger[50],
+  active: colors.secondary[50],
+  inactive: colors.default[100],
 }
 
 export default function StatusBadge({ status }: { status: string }) {

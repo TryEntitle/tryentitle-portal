@@ -75,12 +75,16 @@ export const colors = {
     700: '#991b1b',
   },
   // order status -> semantic color, reused by StatusBadge, DonutChart and
-  // anywhere else that renders an order's status
+  // anywhere else that renders an order's status. Customer-activity
+  // statuses (active/inactive) share the same map — distinct keys, so no
+  // collision with the order-status ones above.
   status: {
     new: '#4338ca',
     'in progress': '#c2410c',
     completed: '#047857',
     cancelled: '#b91c1c',
+    active: '#b9541f',
+    inactive: '#4a4a47',
   } as Record<string, string>,
 }
 

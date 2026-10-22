@@ -9,6 +9,7 @@ import DownloadReceiptButton from '@/components/DownloadReceiptButton'
 import { ChevronLeftIcon } from '@/components/icons'
 import { ADMIN_NAV } from '@/lib/nav'
 import { currency } from '@/lib/analytics'
+import { labelFor } from '@/lib/customers'
 import { colors } from '@/lib/theme'
 
 export default async function AdminOrderDetail({ params }: { params: { id: string } }) {
@@ -18,10 +19,10 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
   } = await supabase.auth.getUser()
   const { data: order } = await supabase.from('orders').select('*').eq('id', params.id).maybeSingle()
   if (!order) notFound()
-  const { data: customer } = await supabase.from('profiles').select('id, company').eq('id', order.customer_id).maybeSingle()
+  const { data: customer } = await supabase.from('profiles').select('id, company, email').eq('id', order.customer_id).maybeSingle()
 
   const status = order.status || 'new'
-  const customerLabel = customer?.company || order.customer_id
+  const customerLabel = labelFor(customer?.company ?? null, customer?.email ?? null)
 
   return (
     <AppShell
@@ -46,7 +47,12 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '18px 16px' }}>
             <Field label="Order ID" value={`#${order.id}`} mono />
             <Field label="Amount" value={currency(Number(order.amount) || 0)} strong />
-            <Field label="Customer" value={customerLabel} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              <span style={{ fontSize: 12.5, color: colors.content.muted }}>Customer</span>
+              <Link href={`/admin/customers/${order.customer_id}`} style={{ fontSize: 14, color: colors.secondary[600], textDecoration: 'none' }}>
+                {customerLabel}
+              </Link>
+            </div>
             <Field label="Created" value={order.created_at ? new Date(order.created_at).toLocaleString() : '—'} />
           </div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', paddingTop: 16, borderTop: `1px solid ${colors.layout.divider}` }}>
