@@ -1,4 +1,13 @@
-export type IconKey = 'dashboard' | 'users' | 'megaphone' | 'help' | 'orders'
+export type IconKey =
+  | 'dashboard'
+  | 'users'
+  | 'megaphone'
+  | 'help'
+  | 'orders'
+  | 'products'
+  | 'messages'
+  | 'payouts'
+  | 'settings'
 
 export type NavLink = { label: string; href: string; icon: IconKey }
 export type NavGroup = { label: string; icon: IconKey; children: NavLink[] }

@@ -7,6 +7,7 @@ export const colors = {
     surface: '#ffffff',
     divider: '#ececea',
     focus: '#e16e38',
+    overlay: 'rgba(41, 41, 40, 0.45)',
   },
   content: {
     primary: '#292928',
@@ -81,4 +82,9 @@ export const colors = {
     completed: '#047857',
     cancelled: '#b91c1c',
   } as Record<string, string>,
+}
+
+// Below this width AppShell collapses the sidebar into an off-canvas drawer.
+export const breakpoints = {
+  mobile: 860,
 }
