@@ -18,15 +18,10 @@ export const ADMIN_NAV: NavEntry[] = [
   { label: 'Orders', href: '/admin/orders', icon: 'orders' },
   { label: 'Products', href: '/admin/products', icon: 'products' },
   { label: 'Messages', href: '/admin/messages', icon: 'messages' },
+  { label: 'Customers', href: '/admin/customers', icon: 'users' },
   { label: 'Payouts', href: '/admin/payouts', icon: 'payouts' },
-  {
-    label: 'Manage',
-    icon: 'users',
-    children: [
-      { label: 'Customers', href: '/admin/customers', icon: 'users' },
-      { label: 'Promote', href: '/admin/promote', icon: 'megaphone' },
-    ],
-  },
+  { label: 'Settings', href: '/admin/settings', icon: 'settings' },
+  { label: 'Promote', href: '/admin/promote', icon: 'megaphone' },
   { label: 'Help', href: '/admin/help', icon: 'help' },
 ]
 

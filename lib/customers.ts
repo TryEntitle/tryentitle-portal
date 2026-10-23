@@ -2,12 +2,12 @@
 // field exists, so it's derived from real signals (order count + how
 // recently they joined) rather than fabricated.
 
-export function labelFor(company: string | null, email: string | null) {
-  return company || email || 'Unknown customer'
+export function labelFor(company: string | null, email: string | null, fullName?: string | null) {
+  return fullName || company || email || 'Unknown customer'
 }
 
-export function initialsFor(company: string | null, email: string | null) {
-  const source = company || email || '?'
+export function initialsFor(company: string | null, email: string | null, fullName?: string | null) {
+  const source = fullName || company || email || '?'
   const parts = source.split(/[\s.@]+/).filter(Boolean)
   return parts.slice(0, 2).map((p) => p[0]?.toUpperCase() ?? '').join('') || '?'
 }

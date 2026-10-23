@@ -98,9 +98,11 @@ supabase/
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in your Supabase project's URL + anon key
+cp .env.example .env.local   # fill in your Supabase project's URL, anon key, and service role key
 npm run dev
 ```
+
+The service role key (`SUPABASE_SERVICE_ROLE_KEY`) is only used server-side, by the Settings → Team "Send invite" API route — find it in Supabase under **Project Settings → API → service_role**.
 
 Then, in that Supabase project's SQL Editor:
 
