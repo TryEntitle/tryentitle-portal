@@ -87,6 +87,8 @@ export const colors = {
     inactive: '#4a4a47',
     live: '#047857',
     draft: '#4a4a47',
+    paid: '#047857',
+    'in transit': '#b9541f',
   } as Record<string, string>,
 }
 
