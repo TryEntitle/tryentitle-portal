@@ -22,8 +22,11 @@ import {
   SettingsIcon,
 } from '@/components/icons'
 import type { IconKey, NavEntry } from '@/lib/nav'
+import { ADMIN_NAV } from '@/lib/nav'
 import { colors } from '@/lib/theme'
 import { useIsMobile } from '@/lib/useIsMobile'
+import HeaderSearch from '@/components/HeaderSearch'
+import HeaderNotifications from '@/components/HeaderNotifications'
 
 const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   dashboard: DashboardIcon,
@@ -122,6 +125,11 @@ export default function AppShell({
   const [openPanel, setOpenPanel] = useState<'mail' | 'bell' | null>(null)
   const isMobile = useIsMobile()
   const [navOpen, setNavOpen] = useState(false)
+  // Search and real notification/message previews only make sense where
+  // there's cross-customer data to search — the admin side. nav is always
+  // the same ADMIN_NAV/CUSTOMER_NAV module singleton, so a reference check
+  // here avoids needing a new prop on every page that renders AppShell.
+  const isAdminShell = nav === ADMIN_NAV
 
   // Closing the drawer on navigation needs the pathname itself, not a
   // click handler per link — Link's own navigation already happened by
@@ -249,56 +257,63 @@ export default function AppShell({
               {subtitle && <p style={{ margin: '6px 0 0', color: colors.content.muted, fontSize: 14 }}>{subtitle}</p>}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
-            <IconButton
-              title="Messages"
-              active={openPanel === 'mail'}
-              onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
-            >
-              <MailIcon size={18} />
-            </IconButton>
-            <IconButton
-              title="Notifications"
-              active={openPanel === 'bell'}
-              onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
-              style={{ position: 'relative' }}
-            >
-              <BellIcon size={18} />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: colors.secondary[500],
-                  border: '1.5px solid #fff',
-                }}
-              />
-            </IconButton>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', position: 'relative', width: isMobile ? '100%' : 'auto' }}>
+            {isAdminShell && <HeaderSearch wide={isMobile} />}
+            {isAdminShell ? (
+              <HeaderNotifications />
+            ) : (
+              <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
+                <IconButton
+                  title="Messages"
+                  active={openPanel === 'mail'}
+                  onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
+                >
+                  <MailIcon size={18} />
+                </IconButton>
+                <IconButton
+                  title="Notifications"
+                  active={openPanel === 'bell'}
+                  onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
+                  style={{ position: 'relative' }}
+                >
+                  <BellIcon size={18} />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: colors.secondary[500],
+                      border: '1.5px solid #fff',
+                    }}
+                  />
+                </IconButton>
 
-            {openPanel && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 48,
-                  right: openPanel === 'mail' ? 50 : 0,
-                  width: 240,
-                  background: colors.layout.surface,
-                  border: `1px solid ${colors.layout.divider}`,
-                  borderRadius: 12,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                  padding: 16,
-                  zIndex: 10,
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-                  {openPanel === 'mail' ? 'Messages' : 'Notifications'}
-                </div>
-                <div style={{ fontSize: 13, color: colors.content.muted }}>
-                  {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
-                </div>
+                {openPanel && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 48,
+                      right: openPanel === 'mail' ? 50 : 0,
+                      width: 240,
+                      background: colors.layout.surface,
+                      border: `1px solid ${colors.layout.divider}`,
+                      borderRadius: 12,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      padding: 16,
+                      zIndex: 10,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                      {openPanel === 'mail' ? 'Messages' : 'Notifications'}
+                    </div>
+                    <div style={{ fontSize: 13, color: colors.content.muted }}>
+                      {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
