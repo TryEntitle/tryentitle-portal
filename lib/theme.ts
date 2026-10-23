@@ -7,6 +7,7 @@ export const colors = {
     surface: '#ffffff',
     divider: '#ececea',
     focus: '#e16e38',
+    overlay: 'rgba(41, 41, 40, 0.45)',
   },
   content: {
     primary: '#292928',
@@ -74,11 +75,24 @@ export const colors = {
     700: '#991b1b',
   },
   // order status -> semantic color, reused by StatusBadge, DonutChart and
-  // anywhere else that renders an order's status
+  // anywhere else that renders an order's status. Customer-activity
+  // statuses (active/inactive) share the same map — distinct keys, so no
+  // collision with the order-status ones above.
   status: {
     new: '#4338ca',
     'in progress': '#c2410c',
     completed: '#047857',
     cancelled: '#b91c1c',
+    active: '#b9541f',
+    inactive: '#4a4a47',
+    live: '#047857',
+    draft: '#4a4a47',
+    paid: '#047857',
+    'in transit': '#b9541f',
   } as Record<string, string>,
+}
+
+// Below this width AppShell collapses the sidebar into an off-canvas drawer.
+export const breakpoints = {
+  mobile: 860,
 }

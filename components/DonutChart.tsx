@@ -12,9 +12,7 @@ export default function DonutChart({ data }: { data: { label: string; value: num
   const r = 60
   const stroke = 22
   const circumference = 2 * Math.PI * r
-  // Each segment is drawn as a full circle whose stroke-dasharray shows only
-  // its slice of the circumference; strokeDashoffset rotates that visible
-  // slice around to where the previous segment left off.
+  // Tracks where the next segment should start on the circle.
   let offset = 0
 
   return (

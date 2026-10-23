@@ -1,6 +1,4 @@
 // On Next.js 16, rename this file to proxy.ts and rename the export to `proxy`.
-// The app runs under basePath '/demo' (see next.config.example.mjs), so paths seen
-// here have NO /demo prefix, and redirects must go through nextUrl.clone() to keep it.
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -27,7 +25,7 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
   const go = (to: string) => {
-    const url = request.nextUrl.clone() // keeps basePath (/demo)
+    const url = request.nextUrl.clone()
     url.pathname = to
     url.search = ''
     return NextResponse.redirect(url)

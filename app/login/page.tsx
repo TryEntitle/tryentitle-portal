@@ -51,7 +51,7 @@ export default function Login() {
             justifyContent: 'space-between',
           }}
         >
-          <Image src="/demo/logo-wordmark.png" alt="TryEntitle" width={260} height={91} priority unoptimized />
+          <Image src="/logo-wordmark.png" alt="TryEntitle" width={260} height={91} priority unoptimized />
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '24px 0' }}>
             <WorkflowPattern />
           </div>

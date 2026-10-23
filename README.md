@@ -1,10 +1,17 @@
 # TryEntitle Portal
 
-Customer portal for TryEntitle: Next.js (App Router) + Supabase Auth, with
-role-based routing and Postgres row-level security enforcing that every
-customer only ever sees their own data — admins see everything.
+Customer portal for TryEntitle. Built with Next.js (App Router) and
+Supabase Auth.
 
-Live at **https://tryentitle.tech/demo/login**.
+Two roles, two views:
+
+- **Admins** see every customer and every order.
+- **Customers** see only their own data.
+
+That separation is enforced twice: once by app routing, and once by the
+database itself (Postgres row-level security). See below for how.
+
+Live at **https://tryentitle.tech/login**.
 
 ## Architecture
 
@@ -20,15 +27,11 @@ flowchart LR
     Next -->|REST / auth calls| Supabase
 ```
 
-Next.js runs under `basePath: '/demo'` (see `next.config.mjs`), so the whole
-app lives at `/demo/*` rather than the domain root — this lets it sit
-alongside a future marketing site on the same domain without conflicting.
-
-## Request flow — who can see what
+## Who can see what, step by step
 
 Every request to `/login`, `/admin/*`, or `/dashboard/*` passes through
-`middleware.ts` before it reaches a page. That's where role-based routing
-happens, *before* any page component runs:
+`middleware.ts` first, before any page even starts rendering. This is where
+the role check and redirect happen:
 
 ```mermaid
 flowchart TD
@@ -46,20 +49,23 @@ flowchart TD
     K -- "No" --> L["Render the requested page"]
 ```
 
-The page itself then queries Supabase directly (via `lib/supabase/server.ts`
-in server components, `lib/supabase/client.ts` in client components like the
-login form). **Data isolation doesn't depend on the middleware check** — it's
-enforced a second time, independently, by Postgres row-level security
-policies in `supabase/schema.sql`:
+Once a page renders, it queries Supabase directly:
 
-- `profiles`: a user can read their own row; admins can read all rows
-  (`is_admin()` helper function).
-- `orders`: a customer can read rows where `customer_id = auth.uid()`;
-  admins can read all rows.
+- Server components use `lib/supabase/server.ts`
+- Client components (like the login form) use `lib/supabase/client.ts`
 
-So even a bug in a page's query (e.g. forgetting a `.eq('customer_id', ...)`
-filter) can't leak another customer's data — the database itself refuses to
-return rows the logged-in user isn't allowed to see.
+**Important:** the middleware check above is a convenience, not the real
+security boundary. The real boundary is in Postgres. `supabase/schema.sql`
+defines row-level security policies that apply no matter what the app code
+does:
+
+- `profiles`: a user can read their own row. Admins can read every row.
+- `orders`: a customer can read rows where `customer_id = auth.uid()`.
+  Admins can read every row.
+
+So if a page's query ever forgot a `.eq('customer_id', ...)` filter, it
+still couldn't leak another customer's data. The database would just
+refuse to return those rows.
 
 ## Project layout
 
@@ -68,50 +74,62 @@ app/
   login/            public login form
   admin/            admin-only: dashboard, customers, promote, help
   dashboard/        customer-only: their own orders, help
-  page.tsx          root route — redirects to /admin or /dashboard by role
+  page.tsx          root route, redirects to /admin or /dashboard by role
+
 components/
   AppShell.tsx      sidebar + header shell used by every authenticated page
-  BarChart.tsx, DonutChart.tsx   small inline-SVG charts, no chart library
-  icons.tsx         hand-drawn icon set (no icon library dependency)
+  BarChart.tsx      order-volume chart (plain inline SVG, no chart library)
+  DonutChart.tsx     order-status chart (plain inline SVG, no chart library)
+  icons.tsx         hand-drawn icon set, no icon library dependency
+
 lib/
-  theme.ts          design tokens (color scales) — the single source of
-                     truth for colors used across every component
-  nav.ts            sidebar nav structure per role
+  theme.ts          design tokens: the one place every color is defined
+  nav.ts            sidebar nav structure, per role
   supabase/         client.ts (browser) and server.ts (server components)
-middleware.ts        the auth/role gate described above
+
+middleware.ts        the role check described above
+
 supabase/
-  schema.sql         run this first in a new Supabase project
-  migrations/         run after schema.sql, in order
+  schema.sql         run this first, in a fresh Supabase project
+  migrations/         run these next, in order
 ```
 
 ## Local development
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in your Supabase project's URL + anon key
+cp .env.example .env.local   # fill in your Supabase project's URL, anon key, and service role key
 npm run dev
 ```
 
-Then, in that Supabase project's SQL Editor: run `supabase/schema.sql`,
-then everything in `supabase/migrations/` in order. Create yourself a user
-under **Authentication → Users** (check "Auto Confirm User"), then promote
-it to admin:
+The service role key (`SUPABASE_SERVICE_ROLE_KEY`) is only used server-side, by the Settings → Team "Send invite" API route — find it in Supabase under **Project Settings → API → service_role**.
+
+Then, in that Supabase project's SQL Editor:
+
+1. Run `supabase/schema.sql`.
+2. Run everything in `supabase/migrations/`, in order.
+3. Create yourself a user under **Authentication → Users**. Check
+   "Auto Confirm User".
+4. Promote that user to admin:
 
 ```sql
 update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-Visit `http://localhost:3000/demo/login`.
+Visit `http://localhost:3000/login`.
 
 ## Deployment
 
-Deployed on a self-managed VPS: PM2 keeps the Next.js process alive and
-restarts it on reboot; Caddy (`deploy/Caddyfile`) reverse-proxies and
-auto-issues/renews the HTTPS certificate. A GitHub deploy key (read-only,
-repo-scoped) is used to pull — no personal credentials live on the server.
+Runs on a self-managed VPS:
 
-To deploy an update:
+- **PM2** keeps the Next.js process alive and restarts it on reboot.
+- **Caddy** (`deploy/Caddyfile`) reverse-proxies to it and auto-issues and
+  renews the HTTPS certificate.
+- A **GitHub deploy key** (read-only, scoped to this repo) is what the
+  server uses to pull. No personal credentials live on the server.
+
+To ship an update:
 
 ```bash
 cd ~/app && git pull && npm ci && npm run build && pm2 restart tryentitle

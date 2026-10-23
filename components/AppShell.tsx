@@ -1,9 +1,10 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import LogoutButton from '@/components/LogoutButton'
+import IconButton from '@/components/IconButton'
 import {
   MailIcon,
   BellIcon,
@@ -13,9 +14,19 @@ import {
   HelpIcon,
   OrdersIcon,
   ChevronDownIcon,
+  MenuIcon,
+  XIcon,
+  PackageIcon,
+  MessageIcon,
+  CreditCardIcon,
+  SettingsIcon,
 } from '@/components/icons'
 import type { IconKey, NavEntry } from '@/lib/nav'
+import { ADMIN_NAV } from '@/lib/nav'
 import { colors } from '@/lib/theme'
+import { useIsMobile } from '@/lib/useIsMobile'
+import HeaderSearch from '@/components/HeaderSearch'
+import HeaderNotifications from '@/components/HeaderNotifications'
 
 const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   dashboard: DashboardIcon,
@@ -23,6 +34,10 @@ const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   megaphone: MegaphoneIcon,
   help: HelpIcon,
   orders: OrdersIcon,
+  products: PackageIcon,
+  messages: MessageIcon,
+  payouts: CreditCardIcon,
+  settings: SettingsIcon,
 }
 
 function NavLinkRow({ label, href, icon, active }: { label: string; href: string; icon?: IconKey; active: boolean }) {
@@ -51,9 +66,7 @@ function NavLinkRow({ label, href, icon, active }: { label: string; href: string
 }
 
 function NavGroupRow({ entry, pathname }: { entry: Extract<NavEntry, { children: unknown[] }>; pathname: string }) {
-  // Auto-expand the group on first render if the current page is inside it,
-  // so navigating straight to e.g. /admin/customers doesn't hide the active
-  // link behind a collapsed "Manage" group.
+  // Start expanded if the current page is inside this group.
   const hasActiveChild = entry.children.some((c) => c.href === pathname)
   const [open, setOpen] = useState(hasActiveChild)
   const Icon = ICONS[entry.icon]
@@ -110,9 +123,29 @@ export default function AppShell({
 }) {
   const pathname = usePathname()
   const [openPanel, setOpenPanel] = useState<'mail' | 'bell' | null>(null)
+  const isMobile = useIsMobile()
+  const [navOpen, setNavOpen] = useState(false)
+  // Search and real notification/message previews only make sense where
+  // there's cross-customer data to search — the admin side. nav is always
+  // the same ADMIN_NAV/CUSTOMER_NAV module singleton, so a reference check
+  // here avoids needing a new prop on every page that renders AppShell.
+  const isAdminShell = nav === ADMIN_NAV
+
+  // Closing the drawer on navigation needs the pathname itself, not a
+  // click handler per link — Link's own navigation already happened by
+  // the time a click handler would fire the state update.
+  useEffect(() => {
+    setNavOpen(false)
+  }, [pathname])
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: colors.layout.background }}>
+      {isMobile && navOpen && (
+        <div
+          onClick={() => setNavOpen(false)}
+          style={{ position: 'fixed', inset: 0, background: colors.layout.overlay, zIndex: 19 }}
+        />
+      )}
       <aside
         style={{
           width: 240,
@@ -122,9 +155,39 @@ export default function AppShell({
           display: 'flex',
           flexDirection: 'column',
           gap: 32,
+          ...(isMobile
+            ? {
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                height: '100vh',
+                overflowY: 'auto',
+                zIndex: 20,
+                transform: navOpen ? 'translateX(0)' : 'translateX(-100%)',
+                transition: 'transform 0.2s ease',
+                boxSizing: 'border-box',
+              }
+            : { position: 'sticky', top: 0, height: '100vh', overflowY: 'auto', boxSizing: 'border-box' }),
         }}
       >
-        <Image src="/demo/logo-wordmark.png" alt="TryEntitle" width={180} height={63} unoptimized />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Image src="/logo-wordmark.png" alt="TryEntitle" width={180} height={63} unoptimized />
+          {isMobile && (
+            <button
+              aria-label="Close menu"
+              onClick={() => setNavOpen(false)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                color: colors.default[300],
+                cursor: 'pointer',
+                padding: 4,
+              }}
+            >
+              <XIcon size={18} />
+            </button>
+          )}
+        </div>
         <nav style={{ display: 'grid', gap: 4 }}>
           {nav.map((entry) =>
             'children' in entry ? (
@@ -170,68 +233,87 @@ export default function AppShell({
         </div>
       </aside>
 
-      <main style={{ flex: 1, padding: 32, maxWidth: 1200 }}>
+      <main style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px 16px' : 32, maxWidth: 1200, boxSizing: 'border-box' }}>
         <div
           style={{
             display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'flex-start',
             justifyContent: 'space-between',
+            gap: 16,
             marginBottom: 28,
           }}
         >
-          <div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 700, color: colors.content.primary }}>{title}</h1>
-            {subtitle && <p style={{ margin: '6px 0 0', color: colors.content.muted, fontSize: 14 }}>{subtitle}</p>}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
+            {isMobile && (
+              <IconButton aria-label="Menu" onClick={() => setNavOpen(true)} style={{ marginTop: 2 }}>
+                <MenuIcon size={16} />
+              </IconButton>
+            )}
+            <div style={{ minWidth: 0 }}>
+              <h1 style={{ margin: 0, fontSize: isMobile ? 24 : 28, fontWeight: 700, color: colors.content.primary }}>
+                {title}
+              </h1>
+              {subtitle && <p style={{ margin: '6px 0 0', color: colors.content.muted, fontSize: 14 }}>{subtitle}</p>}
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
-            <button
-              title="Messages"
-              onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
-              style={iconButtonStyle}
-            >
-              <MailIcon size={18} />
-            </button>
-            <button
-              title="Notifications"
-              onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
-              style={{ ...iconButtonStyle, position: 'relative' }}
-            >
-              <BellIcon size={18} />
-              <span
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  right: 8,
-                  width: 7,
-                  height: 7,
-                  borderRadius: '50%',
-                  background: colors.secondary[500],
-                  border: '1.5px solid #fff',
-                }}
-              />
-            </button>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', position: 'relative', width: isMobile ? '100%' : 'auto' }}>
+            {isAdminShell && <HeaderSearch wide={isMobile} />}
+            {isAdminShell ? (
+              <HeaderNotifications />
+            ) : (
+              <div style={{ display: 'flex', gap: 10, position: 'relative' }}>
+                <IconButton
+                  title="Messages"
+                  active={openPanel === 'mail'}
+                  onClick={() => setOpenPanel(openPanel === 'mail' ? null : 'mail')}
+                >
+                  <MailIcon size={18} />
+                </IconButton>
+                <IconButton
+                  title="Notifications"
+                  active={openPanel === 'bell'}
+                  onClick={() => setOpenPanel(openPanel === 'bell' ? null : 'bell')}
+                  style={{ position: 'relative' }}
+                >
+                  <BellIcon size={18} />
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      width: 7,
+                      height: 7,
+                      borderRadius: '50%',
+                      background: colors.secondary[500],
+                      border: '1.5px solid #fff',
+                    }}
+                  />
+                </IconButton>
 
-            {openPanel && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 48,
-                  right: openPanel === 'mail' ? 50 : 0,
-                  width: 240,
-                  background: colors.layout.surface,
-                  border: `1px solid ${colors.layout.divider}`,
-                  borderRadius: 12,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
-                  padding: 16,
-                  zIndex: 10,
-                }}
-              >
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
-                  {openPanel === 'mail' ? 'Messages' : 'Notifications'}
-                </div>
-                <div style={{ fontSize: 13, color: colors.content.muted }}>
-                  {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
-                </div>
+                {openPanel && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 48,
+                      right: openPanel === 'mail' ? 50 : 0,
+                      width: 240,
+                      background: colors.layout.surface,
+                      border: `1px solid ${colors.layout.divider}`,
+                      borderRadius: 12,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                      padding: 16,
+                      zIndex: 10,
+                    }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
+                      {openPanel === 'mail' ? 'Messages' : 'Notifications'}
+                    </div>
+                    <div style={{ fontSize: 13, color: colors.content.muted }}>
+                      {openPanel === 'mail' ? 'No new messages.' : 'No new notifications.'}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -240,16 +322,4 @@ export default function AppShell({
       </main>
     </div>
   )
-}
-
-const iconButtonStyle: React.CSSProperties = {
-  width: 40,
-  height: 40,
-  borderRadius: 10,
-  border: `1px solid ${colors.layout.divider}`,
-  background: colors.layout.surface,
-  color: colors.default[500],
-  display: 'grid',
-  placeItems: 'center',
-  cursor: 'pointer',
 }
