@@ -16,6 +16,7 @@ export type NavEntry = NavLink | NavGroup
 export const ADMIN_NAV: NavEntry[] = [
   { label: 'Analytics', href: '/admin', icon: 'dashboard' },
   { label: 'Orders', href: '/admin/orders', icon: 'orders' },
+  { label: 'Products', href: '/admin/products', icon: 'products' },
   {
     label: 'Manage',
     icon: 'users',

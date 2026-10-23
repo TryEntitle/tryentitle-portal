@@ -85,6 +85,8 @@ export const colors = {
     cancelled: '#b91c1c',
     active: '#b9541f',
     inactive: '#4a4a47',
+    live: '#047857',
+    draft: '#4a4a47',
   } as Record<string, string>,
 }
 
