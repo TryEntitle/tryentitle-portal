@@ -22,7 +22,8 @@ import {
   SettingsIcon,
 } from '@/components/icons'
 import type { IconKey, NavEntry } from '@/lib/nav'
-import { breakpoints, colors } from '@/lib/theme'
+import { colors } from '@/lib/theme'
+import { useIsMobile } from '@/lib/useIsMobile'
 
 const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   dashboard: DashboardIcon,
@@ -34,17 +35,6 @@ const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   messages: MessageIcon,
   payouts: CreditCardIcon,
   settings: SettingsIcon,
-}
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < breakpoints.mobile)
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-  return isMobile
 }
 
 function NavLinkRow({ label, href, icon, active }: { label: string; href: string; icon?: IconKey; active: boolean }) {

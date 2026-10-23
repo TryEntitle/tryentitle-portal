@@ -17,6 +17,7 @@ export const ADMIN_NAV: NavEntry[] = [
   { label: 'Analytics', href: '/admin', icon: 'dashboard' },
   { label: 'Orders', href: '/admin/orders', icon: 'orders' },
   { label: 'Products', href: '/admin/products', icon: 'products' },
+  { label: 'Messages', href: '/admin/messages', icon: 'messages' },
   {
     label: 'Manage',
     icon: 'users',
