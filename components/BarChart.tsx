@@ -47,6 +47,15 @@ export default function BarChart({
               style={{ cursor: 'pointer' }}
             >
               <rect x={x} y="0" width={barW} height={chartH} fill="transparent" />
+              {/* Ghost track to full height — matches v4 sales chart. */}
+              <rect
+                x={x}
+                y={0}
+                width={barW}
+                height={chartH}
+                rx={Math.min(4, barW / 2)}
+                fill={colors.secondary[50]}
+              />
               <rect
                 x={x}
                 y={y}
