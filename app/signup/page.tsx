@@ -57,7 +57,7 @@ export default function SignUp() {
 
   return (
     <AuthShell>
-      <form onSubmit={onSubmit} style={{ maxWidth: 320, width: '100%', display: 'grid', gap: 16 }}>
+      <form onSubmit={onSubmit} style={{ width: '100%', display: 'grid', gap: 16 }}>
         <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 600 }}>Create your account</h1>
         <p style={{ margin: 0, fontSize: 14, color: colors.content.muted, lineHeight: 1.45 }}>
           Sign up with email to get started with TryEntitle.

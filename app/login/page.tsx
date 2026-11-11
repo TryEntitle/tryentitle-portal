@@ -32,7 +32,7 @@ export default function Login() {
 
   return (
     <AuthShell>
-      <form onSubmit={onSubmit} style={{ maxWidth: 320, width: '100%', display: 'grid', gap: 16 }}>
+      <form onSubmit={onSubmit} style={{ width: '100%', display: 'grid', gap: 16 }}>
         <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 600 }}>Sign in to your account</h1>
         <input
           type="email"
