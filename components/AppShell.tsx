@@ -27,6 +27,7 @@ import { colors } from '@/lib/theme'
 import { useIsMobile } from '@/lib/useIsMobile'
 import HeaderSearch from '@/components/HeaderSearch'
 import HeaderNotifications from '@/components/HeaderNotifications'
+import BusinessInfoModal from '@/components/BusinessInfoModal'
 
 const ICONS: Record<IconKey, React.ComponentType<{ size?: number }>> = {
   dashboard: DashboardIcon,
@@ -320,6 +321,7 @@ export default function AppShell({
         </div>
         {children}
       </main>
+      <BusinessInfoModal />
     </div>
   )
 }

@@ -26,7 +26,7 @@ export default function Login() {
       setLoading(false)
       return
     }
-    router.push('/') // app/page.tsx sends admins to /admin, customers to /dashboard (or onboarding)
+    router.push('/') // app/page.tsx sends admins to /admin, customers to /dashboard
     router.refresh()
   }
 
