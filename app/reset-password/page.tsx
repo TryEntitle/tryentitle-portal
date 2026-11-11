@@ -30,7 +30,7 @@ export default function ResetPassword() {
 
   return (
     <AuthShell>
-      <form onSubmit={onSubmit} style={{ maxWidth: 320, width: '100%', display: 'grid', gap: 16 }}>
+      <form onSubmit={onSubmit} style={{ width: '100%', display: 'grid', gap: 16 }}>
         <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 600 }}>Reset password</h1>
         <p style={{ margin: 0, fontSize: 14, color: colors.content.muted, lineHeight: 1.45 }}>
           Enter your email and we&apos;ll send a link to choose a new password.
