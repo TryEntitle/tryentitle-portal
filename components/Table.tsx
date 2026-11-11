@@ -35,8 +35,18 @@ export default function Table({
   )
 }
 
-export function Td({ children, style }: { children?: React.ReactNode; style?: React.CSSProperties }) {
+export function Td({
+  children,
+  style,
+  colSpan,
+}: {
+  children?: React.ReactNode
+  style?: React.CSSProperties
+  colSpan?: number
+}) {
   return (
-    <td style={{ padding: '12px 16px', borderTop: `1px solid ${colors.default[100]}`, ...style }}>{children}</td>
+    <td colSpan={colSpan} style={{ padding: '12px 16px', borderTop: `1px solid ${colors.default[100]}`, ...style }}>
+      {children}
+    </td>
   )
 }
