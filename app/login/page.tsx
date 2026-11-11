@@ -1,14 +1,16 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { authButtonStyle, authInputStyle, authLinkStyle } from '@/components/AuthShell'
+import AuthShell, { authButtonStyle, authInputStyle, authLinkStyle } from '@/components/AuthShell'
 import { friendlyAuthError } from '@/lib/friendlyError'
 import { colors } from '@/lib/theme'
 
-/** Simple login: logo, email, password, forgot password — nothing else first. */
+/**
+ * Split login matching the product mock: dark left panel with logo +
+ * infographic (AuthShell / WorkflowPattern), form on the right.
+ */
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,34 +39,11 @@ export default function Login() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: colors.layout.background,
-        display: 'grid',
-        placeItems: 'center',
-        padding: 24,
-        boxSizing: 'border-box',
-      }}
-    >
-      <form
-        onSubmit={onSubmit}
-        style={{
-          width: '100%',
-          maxWidth: 360,
-          background: colors.layout.surface,
-          borderRadius: 16,
-          padding: '36px 28px',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
-          display: 'grid',
-          gap: 14,
-          boxSizing: 'border-box',
-        }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
-          <Image src="/logo-wordmark.png" alt="TryEntitle" width={200} height={70} priority unoptimized />
-        </div>
-
+    <AuthShell>
+      <form onSubmit={onSubmit} style={{ width: '100%', display: 'grid', gap: 16 }}>
+        <h1 style={{ margin: '0 0 8px', fontSize: 26, fontWeight: 600, color: colors.content.primary }}>
+          Sign in to your account
+        </h1>
         <input
           type="email"
           placeholder="Email"
@@ -83,19 +62,22 @@ export default function Login() {
           autoComplete="current-password"
           style={authInputStyle}
         />
-
-        <div style={{ textAlign: 'right', marginTop: -4 }}>
+        <div style={{ textAlign: 'right', marginTop: -6 }}>
           <Link href="/reset-password" style={{ ...authLinkStyle, fontSize: 13 }}>
             Forgot password?
           </Link>
         </div>
-
         {error && <p style={{ color: colors.danger[600], fontSize: 14, margin: 0 }}>{error}</p>}
-
         <button type="submit" disabled={loading} style={{ ...authButtonStyle, opacity: loading ? 0.7 : 1 }}>
           {loading ? 'Signing in...' : 'Sign in'}
         </button>
+        <p style={{ margin: '8px 0 0', textAlign: 'center', fontSize: 13, color: colors.content.muted }}>
+          Need access?{' '}
+          <a href="mailto:hello@tryentitle.tech" style={authLinkStyle}>
+            Contact us
+          </a>
+        </p>
       </form>
-    </div>
+    </AuthShell>
   )
 }
