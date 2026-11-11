@@ -8,14 +8,6 @@ function isPublicPath(path: string) {
   return PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
 }
 
-function needsOnboarding(profile: { onboarding_completed_at: string | null; company: string | null } | null) {
-  if (!profile) return true
-  if (profile.onboarding_completed_at) return false
-  // Pre-migration / legacy accounts that already filled company count as done.
-  if (profile.company) return false
-  return true
-}
-
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -45,6 +37,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
+  // Unauthenticated: login (and other auth screens) first — never force a
+  // business-info wizard before they can sign in.
   if (!user) {
     if (isPublicPath(path)) return response
     return go('/login')
@@ -52,24 +46,20 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, company, onboarding_completed_at')
+    .select('role')
     .eq('id', user.id)
     .single()
   const isAdmin = profile?.role === 'admin'
   const home = isAdmin ? '/admin' : '/dashboard'
-  const onboarding = needsOnboarding(profile)
 
   // Authenticated users leave the auth entry screens (except update-password,
   // which needs a session after the email recovery link).
   if (path === '/login' || path === '/signup' || path === '/reset-password') {
-    return go(onboarding ? '/onboarding' : home)
+    return go(home)
   }
 
-  if (onboarding && path !== '/onboarding' && path !== '/update-password' && !path.startsWith('/auth/')) {
-    return go('/onboarding')
-  }
-
-  if (!onboarding && path === '/onboarding') return go(home)
+  // Legacy /onboarding route → home; business info is a post-login popup.
+  if (path === '/onboarding') return go(home)
 
   if (path.startsWith('/admin') && !isAdmin) return go('/dashboard')
 

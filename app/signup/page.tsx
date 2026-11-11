@@ -35,7 +35,7 @@ export default function SignUp() {
       email,
       password,
       options: {
-        emailRedirectTo: `${origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${origin}/auth/callback?next=/`,
       },
     })
     if (error) {
@@ -44,9 +44,10 @@ export default function SignUp() {
       return
     }
 
-    // When email confirmation is off, a session is returned immediately.
+    // When email confirmation is off, a session is returned immediately —
+    // land in the app; BusinessInfoModal asks for company after login.
     if (data.session) {
-      router.push('/onboarding')
+      router.push('/')
       router.refresh()
       return
     }
