@@ -112,3 +112,76 @@ export function trendFor(current: number, previous: number): { direction: 'up' |
 }
 
 export const currency = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+
+export const RANGE_LABELS: Record<Range, string> = {
+  '7d': '7 days',
+  '30d': '30 days',
+  '12m': '12 months',
+  custom: 'Custom',
+}
+
+export type ProfileSegmentRow = { id: string; company: string | null; role?: string | null }
+
+// Customer profiles → Individuals (no company) vs Businesses (has company).
+export function userSegments(profiles: ProfileSegmentRow[]) {
+  const customers = profiles.filter((p) => (p.role || 'customer') === 'customer')
+  let individuals = 0
+  let businesses = 0
+  for (const p of customers) {
+    if (p.company && p.company.trim()) businesses += 1
+    else individuals += 1
+  }
+  const segments = [
+    { label: 'Individuals', value: individuals, colorKey: 'individuals' as const },
+    { label: 'Businesses', value: businesses, colorKey: 'businesses' as const },
+  ].filter((s) => s.value > 0)
+  return { total: customers.length, segments, individuals, businesses }
+}
+
+export type PayoutRow = { amount: number | string | null; status: string | null; created_at: string | null }
+
+export function sumPayoutsInWindow(rows: PayoutRow[], start: Date, end: Date, predicate?: (r: PayoutRow) => boolean) {
+  const endExclusive = new Date(end.getTime() + DAY_MS)
+  const inWindow = rows.filter((r) => {
+    if (!r.created_at) return false
+    const d = new Date(r.created_at)
+    return d >= start && d < endExclusive && (!predicate || predicate(r))
+  })
+  return {
+    count: inWindow.length,
+    amount: inWindow.reduce((sum, r) => sum + (Number(r.amount) || 0), 0),
+  }
+}
+
+// Customers with ≥1 non-cancelled order in the window vs the rest.
+export function subscriptionSegments(
+  profiles: ProfileSegmentRow[],
+  orders: (OrderRow & { customer_id: string })[],
+  start: Date,
+  end: Date,
+) {
+  const customers = profiles.filter((p) => (p.role || 'customer') === 'customer')
+  const endExclusive = new Date(end.getTime() + DAY_MS)
+  const activeIds = new Set<string>()
+  for (const o of orders) {
+    if (!o.created_at || o.status === 'cancelled') continue
+    const d = new Date(o.created_at)
+    if (d < start || d >= endExclusive) continue
+    activeIds.add(o.customer_id)
+  }
+  let active = 0
+  for (const p of customers) {
+    if (activeIds.has(p.id)) active += 1
+  }
+  const inactive = Math.max(0, customers.length - active)
+  const segments = [
+    { label: 'Active', value: active, colorKey: 'active' as const },
+    { label: 'Inactive', value: inactive, colorKey: 'inactive' as const },
+  ].filter((s) => s.value > 0)
+  return { total: active, ofUsers: customers.length, segments }
+}
+
+export function pctOf(part: number, whole: number) {
+  if (whole <= 0) return 0
+  return Math.round((part / whole) * 100)
+}
