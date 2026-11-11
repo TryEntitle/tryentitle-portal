@@ -27,7 +27,7 @@ npm run dev
 In the Supabase SQL editor:
 
 1. Run `supabase/schema.sql`
-2. Run `supabase/migrations/` in order (including `009_onboarding.sql`)
+2. Run `supabase/migrations/` in order (including `009_onboarding.sql` and `010_profiles_grants.sql`)
 3. Create a user (Auth → Users, auto-confirm)
 4. Promote yourself:
 

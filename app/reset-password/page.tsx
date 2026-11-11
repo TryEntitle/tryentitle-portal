@@ -3,6 +3,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AuthShell, { authButtonStyle, authInputStyle, authLinkStyle } from '@/components/AuthShell'
+import { friendlyAuthError } from '@/lib/friendlyError'
 import { colors } from '@/lib/theme'
 
 export default function ResetPassword() {
@@ -22,7 +23,7 @@ export default function ResetPassword() {
     })
     setLoading(false)
     if (error) {
-      setError(error.message)
+      setError(friendlyAuthError(error.message))
       return
     }
     setSent(true)
