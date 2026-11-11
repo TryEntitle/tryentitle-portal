@@ -1,3 +1,10 @@
 tryentitle.tech, www.tryentitle.tech {
-    reverse_proxy localhost:3000
+	# Cloudflare sits in front; Caddy still terminates origin TLS for the VPS.
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	reverse_proxy localhost:3000
 }
