@@ -29,22 +29,25 @@ flowchart LR
 
 ## Who can see what, step by step
 
-Every request to `/login`, `/admin/*`, or `/dashboard/*` passes through
+Every request to auth routes (`/login`, `/signup`, `/reset-password`,
+`/update-password`, `/onboarding`), `/admin/*`, or `/dashboard/*` passes through
 `middleware.ts` first, before any page even starts rendering. This is where
 the role check and redirect happen:
 
 ```mermaid
 flowchart TD
     A["Request arrives"] --> B{"Logged in?\n(Supabase session cookie)"}
-    B -- "No" --> C{"Path is /login?"}
-    C -- "Yes" --> D["Show login page"]
+    B -- "No" --> C{"Public auth path?\n(login/signup/reset/update)"}
+    C -- "Yes" --> D["Show that page"]
     C -- "No" --> E["Redirect to /login"]
-    B -- "Yes" --> F["Look up role\nfrom profiles table"]
-    F --> G{"Path is /login?"}
-    G -- "Yes" --> H{"Role?"}
-    H -- "admin" --> I["Redirect to /admin"]
-    H -- "customer" --> J["Redirect to /dashboard"]
-    G -- "No" --> K{"Path starts with /admin\nand role != admin?"}
+    B -- "Yes" --> F["Look up role +\nonboarding from profiles"]
+    F --> G{"Onboarding incomplete?"}
+    G -- "Yes" --> O["Redirect to /onboarding"]
+    G -- "No" --> H{"Auth entry path?"}
+    H -- "Yes" --> R{"Role?"}
+    R -- "admin" --> I["Redirect to /admin"]
+    R -- "customer" --> J["Redirect to /dashboard"]
+    H -- "No" --> K{"Path starts with /admin\nand role != admin?"}
     K -- "Yes" --> J
     K -- "No" --> L["Render the requested page"]
 ```
@@ -72,9 +75,14 @@ refuse to return those rows.
 ```
 app/
   login/            public login form
+  signup/           public email/password sign up
+  reset-password/   request a password-reset email
+  update-password/  set a new password from the email link
+  onboarding/       first-login wizard (skippable)
+  auth/callback/    exchanges Supabase email-link codes for a session
   admin/            admin-only: dashboard, customers, promote, help
   dashboard/        customer-only: their own orders, help
-  page.tsx          root route, redirects to /admin or /dashboard by role
+  page.tsx          root route, redirects to onboarding /admin /dashboard
 
 components/
   AppShell.tsx      sidebar + header shell used by every authenticated page
@@ -109,10 +117,13 @@ Then, in that Supabase project's SQL Editor:
 1. Run `supabase/schema.sql`.
 2. Run everything in `supabase/migrations/`, in order (including
    `008_freeze_profile_email.sql`, which blocks client rewrites of
-   `profiles.email` so admin invites cannot be stolen via spoofed email).
-3. Create yourself a user under **Authentication → Users**. Check
+   `profiles.email` so admin invites cannot be stolen via spoofed email, and
+   `009_onboarding.sql`, which adds `profiles.onboarding_completed_at`).
+3. Under **Authentication → URL Configuration**, add your site URL and
+   redirect URLs for `/auth/callback` (used by signup confirm + password reset).
+4. Create yourself a user under **Authentication → Users**. Check
    "Auto Confirm User".
-4. Promote that user to admin:
+5. Promote that user to admin:
 
 ```sql
 update public.profiles set role = 'admin'

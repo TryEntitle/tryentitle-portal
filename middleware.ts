@@ -2,6 +2,20 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/update-password', '/auth/callback']
+
+function isPublicPath(path: string) {
+  return PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
+}
+
+function needsOnboarding(profile: { onboarding_completed_at: string | null; company: string | null } | null) {
+  if (!profile) return true
+  if (profile.onboarding_completed_at) return false
+  // Pre-migration / legacy accounts that already filled company count as done.
+  if (profile.company) return false
+  return true
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
@@ -31,21 +45,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (!user) return path === '/login' ? response : go('/login')
+  if (!user) {
+    if (isPublicPath(path)) return response
+    return go('/login')
+  }
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, company, onboarding_completed_at')
     .eq('id', user.id)
     .single()
   const isAdmin = profile?.role === 'admin'
+  const home = isAdmin ? '/admin' : '/dashboard'
+  const onboarding = needsOnboarding(profile)
 
-  if (path === '/login') return go(isAdmin ? '/admin' : '/dashboard')
+  // Authenticated users leave the auth entry screens (except update-password,
+  // which needs a session after the email recovery link).
+  if (path === '/login' || path === '/signup' || path === '/reset-password') {
+    return go(onboarding ? '/onboarding' : home)
+  }
+
+  if (onboarding && path !== '/onboarding' && path !== '/update-password' && !path.startsWith('/auth/')) {
+    return go('/onboarding')
+  }
+
+  if (!onboarding && path === '/onboarding') return go(home)
+
   if (path.startsWith('/admin') && !isAdmin) return go('/dashboard')
 
   return response
 }
 
 export const config = {
-  matcher: ['/login', '/admin/:path*', '/dashboard/:path*'],
+  matcher: [
+    '/login',
+    '/signup',
+    '/reset-password',
+    '/update-password',
+    '/onboarding',
+    '/auth/callback',
+    '/admin/:path*',
+    '/dashboard/:path*',
+  ],
 }
