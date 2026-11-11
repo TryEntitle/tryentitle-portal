@@ -1,17 +1,18 @@
 # TryEntitle Portal
 
-Customer portal for TryEntitle. Built with Next.js (App Router) and
-Supabase Auth.
+Customer and admin portal for TryEntitle.
 
-Two roles, two views:
+- **Live:** [tryentitle.tech/login](https://tryentitle.tech/login)
+- **Stack:** Next.js 14 (App Router) · Supabase Auth + Postgres (RLS) · Sentry
 
-- **Admins** see every customer and every order.
-- **Customers** see only their own data.
+## Who sees what
 
-That separation is enforced twice: once by app routing, and once by the
-database itself (Postgres row-level security). See below for how.
+| Role | Home | Scope |
+|------|------|--------|
+| Admin | `/admin` | All customers, orders, products, messages, payouts, settings |
+| Customer | `/dashboard` | Their own orders and help |
 
-Live at **https://tryentitle.tech/login**.
+Access is checked in `middleware.ts` and enforced again by Postgres RLS. App checks are convenience; the database is the real boundary.
 
 ## Architecture
 
@@ -106,13 +107,11 @@ supabase/
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in your Supabase project's URL, anon key, and service role key
+cp .env.example .env.local   # Supabase URL, anon key, service role key
 npm run dev
 ```
 
-The service role key (`SUPABASE_SERVICE_ROLE_KEY`) is only used server-side, by the Settings → Team "Send invite" API route — find it in Supabase under **Project Settings → API → service_role**.
-
-Then, in that Supabase project's SQL Editor:
+In the Supabase SQL editor:
 
 1. Run `supabase/schema.sql`.
 2. Run everything in `supabase/migrations/`, in order (including
@@ -130,29 +129,35 @@ update public.profiles set role = 'admin'
 where id = (select id from auth.users where email = 'you@example.com');
 ```
 
-Visit `http://localhost:3000/login`.
+Open [http://localhost:3000/login](http://localhost:3000/login).
 
-## Security notes
+## Project map
 
-- Apply every file in `supabase/migrations/` in order on the Supabase project.
-- The app disables Next’s Image Optimizer (`images.unoptimized`) because logos are
-  static local PNGs. Plan a staged upgrade off Next 14.2.x when ready — several
-  npm-audit advisories only have fixes on Next 15.5+/16.
-- `next.config.mjs` and `deploy/Caddyfile` set baseline `nosniff` / `X-Frame-Options`
-  / `Referrer-Policy` headers.
+```
+app/login          Sign in
+app/admin          Analytics, orders, products, messages, customers, payouts, settings, help
+app/dashboard      Customer orders + help
+components/        UI (AppShell, charts, settings tabs, …)
+lib/               theme, nav, analytics helpers, Supabase clients
+supabase/          schema + migrations
+deploy/            Caddy reverse-proxy config
+```
 
-## Deployment
+## Env vars
 
-Runs on a self-managed VPS:
+See `.env.example`. Required:
 
-- **PM2** keeps the Next.js process alive and restarts it on reboot.
-- **Caddy** (`deploy/Caddyfile`) reverse-proxies to it and auto-issues and
-  renews the HTTPS certificate.
-- A **GitHub deploy key** (read-only, scoped to this repo) is what the
-  server uses to pull. No personal credentials live on the server.
+- `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` (server-only; Team invites)
 
-To ship an update:
+Optional: Sentry (`NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_*`) for error reporting and source maps.
+
+## Deploy
+
+Self-managed VPS: PM2 runs Next.js, Caddy terminates HTTPS (`deploy/Caddyfile`).
 
 ```bash
 cd ~/app && git pull && npm ci && npm run build && pm2 restart tryentitle
 ```
+
+Vercel also works if the same env vars are set in the project settings — without them, `/login` will fail at runtime (and previously failed at build when the client was created during prerender).

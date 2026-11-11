@@ -13,13 +13,12 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
+  // Create the client only on submit — calling createBrowserClient during
+  // prerender throws when NEXT_PUBLIC_SUPABASE_* aren't available at build.
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    // Create the browser client only on submit. Calling createClient() during
-    // render breaks `next build` static generation when NEXT_PUBLIC_SUPABASE_*
-    // are unset (e.g. Vercel preview without project env).
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
