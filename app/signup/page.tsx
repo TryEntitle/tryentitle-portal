@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import AuthShell, { authButtonStyle, authInputStyle, authLinkStyle } from '@/components/AuthShell'
+import { friendlyAuthError } from '@/lib/friendlyError'
 import { colors } from '@/lib/theme'
 
 export default function SignUp() {
@@ -39,7 +40,7 @@ export default function SignUp() {
       },
     })
     if (error) {
-      setError(error.message)
+      setError(friendlyAuthError(error.message))
       setLoading(false)
       return
     }
