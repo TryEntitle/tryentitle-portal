@@ -1,0 +1,152 @@
+name: Slack alerts
+
+# Posts to #vercel-alerts whenever a PR is opened/reopened, a review is
+# submitted (including approvals), or a new branch is created.
+# Requires repo secret SLACK_WEBHOOK_URL (Slack Incoming Webhook for that channel).
+# Jobs no-op instead of failing when the secret is missing.
+#
+# Prefer also running in #vercel-alerts:
+#   /github subscribe TryEntitle/tryentitle-portal pulls reviews commits deployments
+# That gives interactive GitHub notifications (approve/comment) without secrets.
+
+on:
+  pull_request:
+    types: [opened, reopened]
+  pull_request_review:
+    types: [submitted]
+  create:
+
+permissions:
+  contents: read
+
+jobs:
+  notify-pull-request:
+    name: Notify Slack — pull request
+    if: github.event_name == 'pull_request' && vars.SLACK_ALERTS_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Slack webhook secret
+        id: check
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL is not set. Add it under Settings → Secrets and variables → Actions (Incoming Webhook for #vercel-alerts). Skipping Slack notify."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post PR alert
+        if: steps.check.outputs.skip == 'false'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "New pull request in ${{ github.repository }}"
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: "New pull request opened"
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>*\n#${{ github.event.pull_request.number }} by `${{ github.event.pull_request.user.login }}` → `${{ github.event.pull_request.base.ref }}`\n`${{ github.event.pull_request.head.ref }}`"
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: Open on GitHub
+                    url: "${{ github.event.pull_request.html_url }}"
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: Files changed
+                    url: "${{ github.event.pull_request.html_url }}/files"
+
+  notify-review:
+    name: Notify Slack — PR review
+    if: github.event_name == 'pull_request_review' && github.event.review.state != '' && vars.SLACK_ALERTS_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Slack webhook secret
+        id: check
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL is not set. Skipping Slack notify."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post review alert
+        if: steps.check.outputs.skip == 'false'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "PR review ${{ github.event.review.state }} on ${{ github.repository }}#${{ github.event.pull_request.number }}"
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: "PR review: ${{ github.event.review.state }}"
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*<${{ github.event.pull_request.html_url }}|${{ github.event.pull_request.title }}>*\n#${{ github.event.pull_request.number }} — `${{ github.event.review.state }}` by `${{ github.event.review.user.login }}`"
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: Open on GitHub
+                    url: "${{ github.event.pull_request.html_url }}"
+
+  notify-new-branch:
+    name: Notify Slack — new branch
+    if: github.event_name == 'create' && github.event.ref_type == 'branch' && vars.SLACK_ALERTS_ENABLED != 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require Slack webhook secret
+        id: check
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL is not set. Add it under Settings → Secrets and variables → Actions (Incoming Webhook for #vercel-alerts). Skipping Slack notify."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post branch alert
+        if: steps.check.outputs.skip == 'false'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: "New branch in ${{ github.repository }}: ${{ github.event.ref }}"
+            blocks:
+              - type: header
+                text:
+                  type: plain_text
+                  text: "New branch created"
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*`${{ github.event.ref }}`* in `${{ github.repository }}`\nby `${{ github.actor }}`"
+              - type: actions
+                elements:
+                  - type: button
+                    text:
+                      type: plain_text
+                      text: Open on GitHub
+                    url: "https://github.com/${{ github.repository }}/tree/${{ github.event.ref }}"
