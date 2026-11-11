@@ -107,7 +107,9 @@ The service role key (`SUPABASE_SERVICE_ROLE_KEY`) is only used server-side, by 
 Then, in that Supabase project's SQL Editor:
 
 1. Run `supabase/schema.sql`.
-2. Run everything in `supabase/migrations/`, in order.
+2. Run everything in `supabase/migrations/`, in order (including
+   `008_freeze_profile_email.sql`, which blocks client rewrites of
+   `profiles.email` so admin invites cannot be stolen via spoofed email).
 3. Create yourself a user under **Authentication → Users**. Check
    "Auto Confirm User".
 4. Promote that user to admin:
