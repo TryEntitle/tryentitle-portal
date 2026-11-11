@@ -27,12 +27,14 @@ drop trigger if exists before_profile_update on public.profiles;
 create trigger before_profile_update before update on public.profiles
   for each row execute function public.prevent_role_self_escalation();
 
+drop policy if exists "update own profile" on public.profiles;
 create policy "update own profile" on public.profiles
   for update using (auth.uid() = id) with check (auth.uid() = id);
 
 -- Admins also need to update OTHER rows (e.g. removing a teammate sets
 -- their role back to 'customer') — the policy above only covers your own
 -- row. The trigger above still has the final say on `role` either way.
+drop policy if exists "admin updates any profile" on public.profiles;
 create policy "admin updates any profile" on public.profiles
   for update using (public.is_admin()) with check (public.is_admin());
 
@@ -45,5 +47,6 @@ create table if not exists public.notification_prefs (
 );
 alter table public.notification_prefs enable row level security;
 
+drop policy if exists "manage own notification prefs" on public.notification_prefs;
 create policy "manage own notification prefs" on public.notification_prefs
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

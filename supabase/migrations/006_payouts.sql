@@ -11,5 +11,6 @@ create table if not exists public.payouts (
 );
 alter table public.payouts enable row level security;
 
+drop policy if exists "admin manages payouts" on public.payouts;
 create policy "admin manages payouts" on public.payouts
   for all using (public.is_admin()) with check (public.is_admin());

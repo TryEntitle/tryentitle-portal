@@ -13,5 +13,7 @@ alter table public.products enable row level security;
 -- Products are the merchant's own catalog, not customer-facing data, so
 -- only admins get access (unlike orders, which customers also read their
 -- own rows of).
+-- Idempotent: safe to re-run in SQL Editor when the policy already exists.
+drop policy if exists "admin manages products" on public.products;
 create policy "admin manages products" on public.products
   for all using (public.is_admin()) with check (public.is_admin());
