@@ -1,6 +1,7 @@
 // On Next.js 16, rename this file to proxy.ts and rename the export to `proxy`.
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { logMissingSupabasePublicEnv, readSupabasePublicEnv } from './lib/supabase/env'
 
 const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/update-password', '/auth/callback']
 
@@ -9,11 +10,27 @@ function isPublicPath(path: string) {
 }
 
 export async function middleware(request: NextRequest) {
+  const go = (to: string) => {
+    const url = request.nextUrl.clone()
+    url.pathname = to
+    url.search = ''
+    return NextResponse.redirect(url)
+  }
+
+  const env = readSupabasePublicEnv()
+  if (!env.ok) {
+    // createServerClient throws when URL or key is missing, which 500s every
+    // matched route. Auth pages can still render; everything else goes to /login.
+    logMissingSupabasePublicEnv(env.missing)
+    if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next()
+    return go('/login')
+  }
+
   let response = NextResponse.next({ request })
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    env.url,
+    env.key,
     {
       cookies: {
         getAll: () => request.cookies.getAll(),
@@ -30,12 +47,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   const path = request.nextUrl.pathname
-  const go = (to: string) => {
-    const url = request.nextUrl.clone()
-    url.pathname = to
-    url.search = ''
-    return NextResponse.redirect(url)
-  }
 
   // Unauthenticated: login (and other auth screens) first — never force a
   // business-info wizard before they can sign in.

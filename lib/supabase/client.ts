@@ -1,12 +1,12 @@
 import { createBrowserClient } from '@supabase/ssr'
+import { readSupabasePublicEnv } from './env'
 
 export const createClient = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  if (!url || !key) {
+  const env = readSupabasePublicEnv()
+  if (!env.ok) {
     throw new Error(
       'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Set them in .env.local (see .env.example).',
     )
   }
-  return createBrowserClient(url, key)
+  return createBrowserClient(env.url, env.key)
 }
