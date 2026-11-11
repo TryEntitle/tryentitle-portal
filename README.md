@@ -121,6 +121,15 @@ where id = (select id from auth.users where email = 'you@example.com');
 
 Visit `http://localhost:3000/login`.
 
+## Security notes
+
+- Apply every file in `supabase/migrations/` in order on the Supabase project.
+- The app disables Next’s Image Optimizer (`images.unoptimized`) because logos are
+  static local PNGs. Plan a staged upgrade off Next 14.2.x when ready — several
+  npm-audit advisories only have fixes on Next 15.5+/16.
+- `next.config.mjs` and `deploy/Caddyfile` set baseline `nosniff` / `X-Frame-Options`
+  / `Referrer-Policy` headers.
+
 ## Deployment
 
 Runs on a self-managed VPS:
