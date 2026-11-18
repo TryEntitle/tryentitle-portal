@@ -1,12 +1,31 @@
 // On Next.js 16, rename this file to proxy.ts and rename the export to `proxy`.
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { logMissingSupabasePublicEnv, readSupabasePublicEnv } from './lib/supabase/env'
+import { reportSupabaseConfigOutage, supabaseConfigOutageResponse } from './lib/supabase/outage'
+import { readSupabaseServerEnv } from './lib/supabase/server-env'
 
 const PUBLIC_PATHS = ['/login', '/signup', '/reset-password', '/update-password', '/auth/callback']
 
 function isPublicPath(path: string) {
   return PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`))
+}
+
+// Same routes the previous matcher covered. Other paths pass through when
+// Supabase env is present, so API auth and unknown URLs keep their own behavior.
+function isAuthPath(path: string) {
+  if (
+    path === '/login' ||
+    path === '/signup' ||
+    path === '/reset-password' ||
+    path === '/update-password' ||
+    path === '/onboarding'
+  ) {
+    return true
+  }
+  if (path === '/auth/callback' || path.startsWith('/auth/callback/')) return true
+  if (path === '/admin' || path.startsWith('/admin/')) return true
+  if (path === '/dashboard' || path.startsWith('/dashboard/')) return true
+  return false
 }
 
 export async function middleware(request: NextRequest) {
@@ -17,31 +36,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  const env = readSupabasePublicEnv()
+  const env = readSupabaseServerEnv()
   if (!env.ok) {
-    // createServerClient throws when URL or key is missing, which 500s every
-    // matched route. Auth pages can still render; everything else goes to /login.
-    logMissingSupabasePublicEnv(env.missing)
-    if (isPublicPath(request.nextUrl.pathname)) return NextResponse.next()
-    return go('/login')
+    // createServerClient throws when URL or key is missing. Every route,
+    // including login, gets the outage page instead of a 404 or a stack.
+    await reportSupabaseConfigOutage(env.missing)
+    return supabaseConfigOutageResponse()
   }
+
+  if (!isAuthPath(request.nextUrl.pathname)) return NextResponse.next()
 
   let response = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    env.url,
-    env.key,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
-          list.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
-          list.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
-        },
+  const supabase = createServerClient(env.url, env.key, {
+    cookies: {
+      getAll: () => request.cookies.getAll(),
+      setAll: (list: { name: string; value: string; options: CookieOptions }[]) => {
+        list.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request })
+        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
       },
-    }
-  )
+    },
+  })
 
   const {
     data: { user },
@@ -55,11 +71,7 @@ export async function middleware(request: NextRequest) {
     return go('/login')
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isAdmin = profile?.role === 'admin'
   const home = isAdmin ? '/admin' : '/dashboard'
 
@@ -78,14 +90,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/login',
-    '/signup',
-    '/reset-password',
-    '/update-password',
-    '/onboarding',
-    '/auth/callback',
-    '/admin/:path*',
-    '/dashboard/:path*',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)'],
 }

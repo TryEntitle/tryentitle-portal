@@ -16,17 +16,22 @@ export default function ResetPassword() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const origin = window.location.origin
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${origin}/auth/callback?next=/update-password`,
-    })
-    setLoading(false)
-    if (error) {
-      setError(friendlyAuthError(error.message))
-      return
+    try {
+      const supabase = createClient()
+      const origin = window.location.origin
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/auth/callback?next=/update-password`,
+      })
+      setLoading(false)
+      if (error) {
+        setError(friendlyAuthError(error.message))
+        return
+      }
+      setSent(true)
+    } catch (err) {
+      setError(friendlyAuthError(err instanceof Error ? err.message : undefined))
+      setLoading(false)
     }
-    setSent(true)
   }
 
   return (

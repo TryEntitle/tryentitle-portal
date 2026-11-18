@@ -4,9 +4,8 @@ import { readSupabasePublicEnv } from './env'
 export const createClient = () => {
   const env = readSupabasePublicEnv()
   if (!env.ok) {
-    throw new Error(
-      'Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY. Set them in .env.local (see .env.example).',
-    )
+    // Plain language only. Variable names and hosts stay off the page.
+    throw new Error('This site is down because server configuration is incomplete.')
   }
   return createBrowserClient(env.url, env.key)
 }

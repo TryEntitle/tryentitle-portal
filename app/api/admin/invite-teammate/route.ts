@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { reportSupabaseConfigOutage } from '@/lib/supabase/outage'
+import { readServerEnv, serviceRoleEnvName, supabaseProjectUrlName } from '@/lib/supabase/server-env'
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 
 async function findAuthUserIdByEmail(
-  admin: ReturnType<typeof createAdminClient>,
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
   email: string
 ): Promise<{ id: string } | { error: string } | null> {
   let page = 1
@@ -44,6 +46,16 @@ export async function POST(request: Request) {
   if (!EMAIL_RE.test(trimmed)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 })
 
   const admin = createAdminClient()
+  if (!admin) {
+    const missing: string[] = []
+    if (!readServerEnv(supabaseProjectUrlName())) missing.push(supabaseProjectUrlName())
+    if (!readServerEnv(serviceRoleEnvName())) missing.push(serviceRoleEnvName())
+    if (missing.length > 0) await reportSupabaseConfigOutage(missing, 'invites')
+    return NextResponse.json(
+      { error: 'Team invites are unavailable because server configuration is incomplete.' },
+      { status: 503 },
+    )
+  }
 
   const existingAuth = await findAuthUserIdByEmail(admin, trimmed)
   if (existingAuth && 'error' in existingAuth) {
