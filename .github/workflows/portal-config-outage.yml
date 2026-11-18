@@ -1,0 +1,216 @@
+name: Portal configuration check
+
+# Probes the public site. When visitors are seeing the configuration outage
+# page, opens one GitHub issue (built-in GITHUB_TOKEN) and posts to Slack.
+# Closes that issue when the site responds normally again.
+#
+# SLACK_WEBHOOK_URL is the same Actions secret as slack-alerts.yml. The Slack
+# step no-ops when it is unset.
+#
+# Supabase recording no-ops unless both Actions secrets are set:
+#   SUPABASE_URL                  https://<project-ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY     same service-role key as the app host
+# The key bypasses RLS. This job only calls public.record_config_outage().
+# Skip both secrets to leave Supabase out; GitHub and Slack still run.
+# Apply supabase/migrations/011_ops_incidents.sql before expecting a row.
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: portal-config-outage
+  cancel-in-progress: true
+
+jobs:
+  check-portal:
+    name: Check live portal
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe public site
+        id: probe
+        run: |
+          set -uo pipefail
+          body=$(mktemp)
+          headers=$(mktemp)
+          trap 'rm -f "$body" "$headers"' EXIT
+          code=$(curl -sS -L --max-redirs 3 -m 20 \
+            -A 'tryentitle-config-check' \
+            -H 'Cache-Control: no-cache' \
+            -D "$headers" \
+            -o "$body" \
+            -w '%{http_code}' \
+            'https://tryentitle.tech/login' || true)
+          if [ -z "${code}" ]; then code="000"; fi
+          marker=false
+          if grep -q 'name="tryentitle-status" content="configuration-incomplete"' "$body"; then
+            marker=true
+          fi
+          if grep -qi '^x-tryentitle-status:[[:space:]]*configuration-incomplete[[:space:]]*$' "$headers"; then
+            marker=true
+          fi
+          case "$code" in
+            2??|3??)
+              if [ "$marker" = true ]; then state=configuration; else state=up; fi
+              ;;
+            *)
+              if [ "$marker" = true ]; then state=configuration; else state=unreachable; fi
+              ;;
+          esac
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+          echo "http_code=$code" >> "$GITHUB_OUTPUT"
+          echo "Portal check state=$state http=$code"
+
+      - name: Open or resolve GitHub issue
+        id: issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATE: ${{ steps.probe.outputs.state }}
+          HTTP_CODE: ${{ steps.probe.outputs.http_code }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          gh label create config-outage --color b91c1c --description "Portal server configuration is incomplete" --force
+          gh label create portal-unreachable --color d97706 --description "Portal health check could not confirm the site is up" --force
+
+          created=false
+          resolved=false
+          issue_url=""
+
+          close_labeled() {
+            local label="$1"
+            local note="$2"
+            local nums n
+            nums=$(gh issue list --state open --label "$label" --limit 20 --json number --jq '.[].number')
+            for n in $nums; do
+              gh issue comment "$n" --body "$note"
+              gh issue close "$n" --reason completed
+              resolved=true
+              issue_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/issues/${n}"
+            done
+          }
+
+          open_once() {
+            local label="$1"
+            local title="$2"
+            local body="$3"
+            local existing url
+            existing=$(gh issue list --state open --label "$label" --limit 1 --json number --jq '.[0].number')
+            if [ -n "$existing" ] && [ "$existing" != "null" ]; then
+              issue_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/issues/${existing}"
+              return
+            fi
+            url=$(gh issue create --label "$label" --title "$title" --body "$body")
+            issue_url="$url"
+            created=true
+          }
+
+          if [ "$STATE" = "up" ]; then
+            close_labeled config-outage "The public site is responding again. Visitors are no longer seeing the configuration outage page."
+            close_labeled portal-unreachable "The public site is responding again."
+          elif [ "$STATE" = "configuration" ]; then
+            close_labeled portal-unreachable "The public site is reachable and is serving the configuration outage page. Tracking that on the config-outage issue."
+            open_once config-outage \
+              "Portal is down: server configuration is incomplete" \
+              "$(printf '%s\n' \
+                "The live site https://tryentitle.tech returned the configuration outage page (HTTP ${HTTP_CODE})." \
+                "" \
+                "Visitors see a short notice that the site is down because server configuration is incomplete. That page does not include credentials or internal hosts." \
+                "" \
+                "Check the host environment against .env.example. Do not paste secret values into this issue." \
+                "" \
+                "Workflow run: ${RUN_URL}" \
+                "" \
+                "This issue closes automatically when the check passes.")"
+          else
+            open_once portal-unreachable \
+              "Portal health check could not confirm the site is up" \
+              "$(printf '%s\n' \
+                "The scheduled check did not get a healthy response from https://tryentitle.tech (HTTP ${HTTP_CODE})." \
+                "" \
+                "This is not the configuration-outage page. No response body is stored here." \
+                "" \
+                "Workflow run: ${RUN_URL}" \
+                "" \
+                "This issue closes automatically when the check passes.")"
+          fi
+
+          slack_text=""
+          if [ "$STATE" = "up" ] && [ "$resolved" = true ]; then
+            slack_text="TryEntitle portal is responding again. ${issue_url}"
+          elif [ "$STATE" = "configuration" ] && [ "$created" = true ]; then
+            slack_text="TryEntitle portal is down: server configuration is incomplete. ${issue_url}"
+          elif [ "$STATE" = "unreachable" ] && [ "$created" = true ]; then
+            slack_text="TryEntitle portal health check could not confirm the site is up. ${issue_url}"
+          fi
+
+          {
+            echo "created=${created}"
+            echo "resolved=${resolved}"
+            echo "issue_url=${issue_url}"
+          } >> "$GITHUB_OUTPUT"
+          # A blank line inside the heredoc would still look non-empty to the
+          # next step, so only publish Slack text when there is something to say.
+          if [ -n "${slack_text}" ]; then
+            {
+              echo "slack_text<<EOF"
+              echo "${slack_text}"
+              echo "EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require Slack webhook secret
+        id: slack
+        if: steps.issue.outputs.slack_text != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::notice::SLACK_WEBHOOK_URL is not set. Add it under Settings → Secrets and variables → Actions (Incoming Webhook for #vercel-alerts). Skipping Slack notify."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post Slack alert
+        if: steps.slack.outputs.skip == 'false'
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
+          payload: |
+            text: ${{ toJson(steps.issue.outputs.slack_text) }}
+
+      - name: Record incident in Supabase
+        if: steps.probe.outputs.state == 'configuration'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
+            echo "::notice::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set. Add both under Settings → Secrets and variables → Actions to record outages in Supabase (the service role bypasses RLS; this job only calls record_config_outage). Skipping."
+            exit 0
+          fi
+          if ! python3 -c 'import os,sys; from urllib.parse import urlparse; raw=os.environ.get("SUPABASE_URL","").strip(); u=urlparse(raw); host=u.hostname or ""; ref=host.split(".")[0] if host else ""; ok=(u.scheme=="https" and not u.username and not u.password and u.port is None and host.endswith(".supabase.co") and host.count(".")==2 and ref.isalnum() and 10<=len(ref)<=40 and u.path in ("","/") and not u.query and not u.fragment); sys.exit(0 if ok else 1)'; then
+            echo "::notice::SUPABASE_URL must be https://<project-ref>.supabase.co with no path. Skipping Supabase record."
+            exit 0
+          fi
+          status=$(curl -sS -o /dev/null -w '%{http_code}' --max-redirs 0 -m 20 \
+            -X POST "${SUPABASE_URL%/}/rest/v1/rpc/record_config_outage" \
+            -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{}') || status="000"
+          case "$status" in
+            200|204) echo "Supabase incident recorded." ;;
+            *) echo "::notice::Supabase incident record returned HTTP ${status}. If this is 404, run supabase/migrations/011_ops_incidents.sql in the SQL editor." ;;
+          esac
+
+      - name: Fail while the site is down
+        if: steps.probe.outputs.state != 'up'
+        run: exit 1

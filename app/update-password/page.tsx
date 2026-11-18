@@ -21,18 +21,26 @@ export default function UpdatePassword() {
   useEffect(() => {
     let cancelled = false
     async function check() {
-      const supabase = createClient()
-      const hash = typeof window !== 'undefined' ? window.location.hash : ''
-      if (hash.includes('access_token') || hash.includes('type=recovery')) {
-        // Let the client parse the hash into a session.
-        await supabase.auth.getSession()
-      }
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-      if (!cancelled) {
-        setReady(!!session)
-        setChecking(false)
+      try {
+        const supabase = createClient()
+        const hash = typeof window !== 'undefined' ? window.location.hash : ''
+        if (hash.includes('access_token') || hash.includes('type=recovery')) {
+          // Let the client parse the hash into a session.
+          await supabase.auth.getSession()
+        }
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+        if (!cancelled) {
+          setReady(!!session)
+          setChecking(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(friendlyAuthError(err instanceof Error ? err.message : undefined))
+          setReady(false)
+          setChecking(false)
+        }
       }
     }
     check()
@@ -53,15 +61,20 @@ export default function UpdatePassword() {
       return
     }
     setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({ password })
-    if (error) {
-      setError(friendlyAuthError(error.message))
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password })
+      if (error) {
+        setError(friendlyAuthError(error.message))
+        setLoading(false)
+        return
+      }
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      setError(friendlyAuthError(err instanceof Error ? err.message : undefined))
       setLoading(false)
-      return
     }
-    router.push('/')
-    router.refresh()
   }
 
   return (
@@ -73,7 +86,7 @@ export default function UpdatePassword() {
         ) : !ready ? (
           <>
             <p style={{ margin: 0, fontSize: 14, color: colors.danger[600], lineHeight: 1.45 }}>
-              This reset link is missing or expired. Request a new one from the forgot-password page.
+              {error || 'This reset link is missing or expired. Request a new one from the forgot-password page.'}
             </p>
             <p style={{ margin: '4px 0 0', textAlign: 'center', fontSize: 13, color: colors.content.muted }}>
               <Link href="/reset-password" style={authLinkStyle}>

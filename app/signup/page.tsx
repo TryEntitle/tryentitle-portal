@@ -30,31 +30,36 @@ export default function SignUp() {
     }
 
     setLoading(true)
-    const supabase = createClient()
-    const origin = window.location.origin
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: `${origin}/auth/callback?next=/`,
-      },
-    })
-    if (error) {
-      setError(friendlyAuthError(error.message))
+    try {
+      const supabase = createClient()
+      const origin = window.location.origin
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${origin}/auth/callback?next=/`,
+        },
+      })
+      if (error) {
+        setError(friendlyAuthError(error.message))
+        setLoading(false)
+        return
+      }
+
+      // When email confirmation is off, a session is returned immediately —
+      // land in the app; BusinessInfoModal asks for company after login.
+      if (data.session) {
+        router.push('/')
+        router.refresh()
+        return
+      }
+
       setLoading(false)
-      return
+      setInfo('Check your email to confirm your account, then sign in.')
+    } catch (err) {
+      setError(friendlyAuthError(err instanceof Error ? err.message : undefined))
+      setLoading(false)
     }
-
-    // When email confirmation is off, a session is returned immediately —
-    // land in the app; BusinessInfoModal asks for company after login.
-    if (data.session) {
-      router.push('/')
-      router.refresh()
-      return
-    }
-
-    setLoading(false)
-    setInfo('Check your email to confirm your account, then sign in.')
   }
 
   return (
